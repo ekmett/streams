@@ -11,19 +11,20 @@ homepage:      http://github.com/ekmett/streams
 copyright:     Copyright 2011 Edward Kmett
                Copyright 2010 Tony Morris, Oliver Taylor, Eelis van der Weegen
                Copyright 2007-2010 Wouter Swierstra, Bas van Dijk
-synopsis:      Various Haskell 98 stream comonads
-description:   Various Haskell 98 stream comonads
+synopsis:      Various Haskell 2010 stream comonads
+description:   Various Haskell 2010 stream comonads
 build-type:    Simple
 
 library
   build-depends:
     base >= 4 && < 4.4,
-    comonads >= 0.6.0 && < 0.7,
+    comonad >= 0.6.0 && < 0.7,
     functor-apply >= 0.7.4 && < 0.8,
     semigroups >= 0.3.2 && < 0.4
 
   exposed-modules:
-    Data.Stream.Braching
+    Data.Stream.Branching
+    Data.Stream.Future
     Data.Stream.Infinite
     Data.Stream.NonEmpty
 

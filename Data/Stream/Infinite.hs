@@ -15,23 +15,23 @@ module Data.Stream.Infinite (
    -- * The type of streams
      Stream(..)
    -- * Basic functions
-   , head
-   , tail
-   , inits
-   , tails
+   , head   -- :: Stream a -> a
+   , tail   -- :: Stream a -> Stream a
+   , inits  -- :: Stream a -> Stream [a]
+   , tails  -- :: Stream a -> Stream (Stream a)
    -- * Stream transformations
-   , map
-   , intersperse
-   , interleave
-   , scan
-   , scan'
-   , scan1
-   , scan1'
-   , transpose
+   , map         -- :: (a -> b) -> Stream a -> Stream b
+   , intersperse -- :: a -> Stream a -> Stream
+   , interleave  -- :: Stream a -> Stream a -> Stream a
+   , scanl       -- :: (b -> a -> b) -> b -> Stream a -> Stream b
+   , scanl'      -- :: (b -> a -> b) -> b -> Stream a -> Stream b
+   , scanl1      -- :: (a -> a -> a) -> Stream a -> Stream a
+   , scanl1'     -- :: (a -> a -> a) -> Stream a -> Stream a
+   , transpose   -- :: Stream (Stream a) -> Stream (Stream a)
    -- * Building streams
-   , iterate
-   , repeat
-   , cycle
+   , iterate     -- :: (a -> a) -> a -> Stream a
+   , repeat      -- :: a -> Stream a
+   , cycle       -- :: NonEmpty a -> Stream a
    , unfold
    -- * Extracting sublists
    , take
@@ -66,7 +66,7 @@ module Data.Stream.Infinite (
    ) where
 
 import Prelude hiding 
-  ( head, tail, map, scanl, scanl1
+  ( head, tail, map, scanr, scanr1, scanl, scanl1
   , iterate, take, drop, takeWhile
   , dropWhile, repeat, cycle, filter
   , (!!), zip, unzip, zipWith, words
@@ -77,16 +77,16 @@ import Prelude hiding
 import Control.Applicative
 import Control.Comonad
 import Control.Comonad.Apply
-import Control.Monad (liftM2)
 import Data.Char (isSpace)
 import Data.Data
 import Data.Functor.Apply
-import Data.Monoid (mappend)
+import Data.Monoid
 import Data.Semigroup
 import Data.Foldable
 import Data.Traversable
 import Data.Semigroup.Traversable
 import Data.Semigroup.Foldable
+import Data.Stream.NonEmpty (NonEmpty(..))
 
 data Stream a = a :> Stream a
   deriving (Data,Typeable,Show)
@@ -137,9 +137,10 @@ instance Applicative Stream where
   (<* ) = (<. )
   ( *>) = ( .>)
 
--- note, you'd better use a productive fold, because these never terminate!
 instance Foldable Stream where
-  foldr f _ = go f where go f (a :> as) = f a (go f as)
+  fold (m :> ms) = m `mappend` fold ms
+  foldMap f (a :> as) = f a `mappend` foldMap f as
+  foldr f0 _ = go f0 where go f (a :> as) = f a (go f as)
 
 instance Traversable Stream where
   traverse f ~(a :> as) = (:>) <$> f a <*> traverse f as
@@ -152,7 +153,7 @@ instance Traversable1 Stream where
 
 -- | The unfold function is similar to the unfold for lists. Note
 -- there is no base case: all streams must be infinite.
-unfold :: (b -> (a, b)) -> b -> Stream a
+unfold :: (a -> (b, a)) -> a -> Stream b
 unfold f c | (x, d) <- f c = x :> unfold f d
 
 instance Monad Stream where
@@ -183,53 +184,52 @@ instance Semigroup (Stream a) where
 inits :: Stream a -> Stream [a]
 inits xs = [] :> ((head xs :) <$> inits (tail xs))
 
--- | 'intersperse' @y@ @xs@ creates an alternating stream of
+-- | @'intersperse' y xs@ creates an alternating stream of
 -- elements from @xs@ and @y@.
 intersperse :: a -> Stream a -> Stream a
 intersperse y ~(x :> xs) = x :> y :> intersperse y xs
 
-
--- | 'scan' yields a stream of successive reduced values from:
+-- | 'scanl' yields a stream of successive reduced values from:
 --
--- > scan f z [x1, x2, ...] == [z, z `f` x1, (z `f` x1) `f` x2, ...]
-scan :: (a -> b -> a) -> a -> Stream b -> Stream a
-scan f z ~(x :> xs) = z :> scan f (f z x) xs
+-- > scanl f z [x1, x2, ...] == [z, z `f` x1, (z `f` x1) `f` x2, ...]
+scanl :: (a -> b -> a) -> a -> Stream b -> Stream a
+scanl f z ~(x :> xs) = z :> scanl f (f z x) xs
 
--- | 'scan' yields a stream of successive reduced values from:
+-- | 'scanl' yields a stream of successive reduced values from:
 --
--- > scan f z [x1, x2, ...] == [z, z `f` x1, (z `f` x1) `f` x2, ...]
-scan' :: (a -> b -> a) -> a -> Stream b -> Stream a
-scan' f z ~(x :> xs) = z :> (scan' f $! f z x) xs
+-- > scanl f z [x1, x2, ...] == [z, z `f` x1, (z `f` x1) `f` x2, ...]
+scanl' :: (a -> b -> a) -> a -> Stream b -> Stream a
+scanl' f z ~(x :> xs) = z :> (scanl' f $! f z x) xs
 
--- | 'scan1' is a variant of 'scan' that has no starting value argument:
+-- | 'scanl1' is a variant of 'scanl' that has no starting value argument:
 --
--- > scan1 f [x1, x2, ...] == [x1, x1 `f` x2, ...]
-scan1 :: (a -> a -> a) -> Stream a -> Stream a
-scan1 f ~(x :> xs) = scan f x xs
+-- > scanl1 f [x1, x2, ...] == [x1, x1 `f` x2, ...]
+scanl1 :: (a -> a -> a) -> Stream a -> Stream a
+scanl1 f ~(x :> xs) = scanl f x xs
 
--- | @scan1'@ is a strict scan that has no starting value.
-scan1' :: (a -> a -> a) -> Stream a -> Stream a
-scan1' f ~(x :> xs) = scan' f x xs
+-- | @scanl1'@ is a strict 'scanl' that has no starting value.
+scanl1' :: (a -> a -> a) -> Stream a -> Stream a
+scanl1' f ~(x :> xs) = scanl' f x xs
 
 -- | 'transpose' computes the transposition of a stream of streams.
 transpose :: Stream (Stream a) -> Stream (Stream a)
 transpose ~((x :> xs) :> yss) =
   (x :> (head <$> yss)) :> transpose (xs :> (tail <$> yss))
 
--- | 'iterate' @f@ @x@ function produces the infinite sequence
+-- | @'iterate' f x@ produces the infinite sequence
 -- of repeated applications of @f@ to @x@.
 --
 -- > iterate f x = [x, f x, f (f x), ..]
 iterate :: (a -> a) -> a -> Stream a
 iterate f x = x :> iterate f (f x)
 
--- | 'cycle' @xs@ returns the infinite repetition of @xs@:
+-- | @'cycle' xs@ returns the infinite repetition of @xs@:
 --
 -- > cycle [1,2,3] = Cons 1 (Cons 2 (Cons 3 (Cons 1 (Cons 2 ...
-cycle :: [a] -> Stream a
-cycle xs = foldr (:>) (cycle xs) xs
+cycle :: NonEmpty a -> Stream a
+cycle xs = ys where ys = foldr (:>) ys xs
 
--- | 'take' @n@ @xs@ returns the first @n@ elements of @xs@.
+-- | @'take' n xs@ returns the first @n@ elements of @xs@.
 --
 -- /Beware/: passing a negative integer as the first argument will
 -- cause an error.
@@ -239,7 +239,7 @@ take n ~(x :> xs)
   | n > 0 = x : take (n - 1) xs
   | otherwise = error "Stream.take: negative argument"
 
--- | 'drop' @n@ @xs@ drops the first @n@ elements off the front of
+-- | @'drop' n xs@ drops the first @n@ elements off the front of
 -- the sequence @xs@.
 --
 -- /Beware/: passing a negative integer as the first argument will
@@ -250,9 +250,9 @@ drop n xs
   | n > 0 = drop (n - 1) (tail xs)
   | otherwise = error "Stream.drop: negative argument"
 
--- | The 'splitAt' function takes an integer @n@ and a stream @xs@
--- and returns a pair consisting of the prefix of @xs@ of length
--- @n@ and the remaining stream immediately following this prefix.
+-- | @'splitAt' n xs@ returns a pair consisting of the prefix of 
+-- @xs@ of length @n@ and the remaining stream immediately following 
+-- this prefix.
 --
 -- /Beware/: passing a negative integer as the first argument will
 -- cause an error.
@@ -262,15 +262,15 @@ splitAt n xs
   | n > 0, (prefix, rest) <- splitAt (n - 1) (tail xs) = (head xs : prefix, rest)
   | otherwise = error "Stream.splitAt: negative argument"
 
--- | 'takeWhile' @p@ @xs@ returns the longest prefix of the stream
+-- | @'takeWhile' p xs@ returns the longest prefix of the stream
 -- @xs@ for which the predicate @p@ holds.
 takeWhile :: (a -> Bool) -> Stream a -> [a]
 takeWhile p (x :> xs) 
   | p x = x : takeWhile p xs
   | otherwise = []
 
--- | 'dropWhile' @p@ @xs@ returns the suffix remaining after
--- 'takeWhile' @p@ @xs@.
+-- | @'dropWhile' p xs@ returns the suffix remaining after
+-- @'takeWhile' p xs@.
 --
 -- /Beware/: this function may diverge if every element of @xs@
 -- satisfies @p@, e.g.  @dropWhile even (repeat 0)@ will loop.
@@ -279,7 +279,7 @@ dropWhile p ~(x :> xs)
   | p x = dropWhile p xs
   | otherwise = x :> xs
 
--- | 'span' @p@ @xs@ returns the longest prefix of @xs@ that satisfies
+-- | @'span' p xs@ returns the longest prefix of @xs@ that satisfies
 -- @p@, together with the remainder of the stream.
 span :: (a -> Bool) -> Stream a -> ([a], Stream a)
 span p xxs@(x :> xs)
@@ -290,7 +290,7 @@ span p xxs@(x :> xs)
 break :: (a -> Bool) -> Stream a -> ([a], Stream a)
 break p = span (not . p)
 
--- | 'filter' @p@ @xs@, removes any elements from @xs@ that do not satisfy @p@.
+-- | @'filter' p xs@, removes any elements from @xs@ that do not satisfy @p@.
 --
 -- /Beware/: this function may diverge if there is no element of
 -- @xs@ that satisfies @p@, e.g.  @filter odd (repeat 0)@ will loop.
@@ -319,11 +319,13 @@ partition p ~(x :> xs)
 -- contains only equal elements.  For example,
 --
 -- > group $ cycle "Mississippi" = "M" ::: "i" ::: "ss" ::: "i" ::: "ss" ::: "i" ::: "pp" ::: "i" ::: "M" ::: "i" ::: ...
-group :: Eq a => Stream a -> Stream [a]
-group ~(x :> ys) 
-  | (xs, zs) <- span (\y -> x == y) ys 
-  = (x : xs) :> group zs
+group :: Eq a => Stream a -> Stream (NonEmpty a)
+group = groupBy (==)
 
+groupBy :: (a -> a -> Bool) -> Stream a -> Stream (NonEmpty a)
+groupBy eq ~(x :> ys) 
+  | (xs, zs) <- span (eq x) ys 
+  = (x :| xs) :> groupBy eq zs
 
 -- | The 'isPrefix' function returns @True@ if the first argument is
 -- a prefix of the second.
@@ -347,7 +349,7 @@ isPrefixOf (y:ys) (x :> xs)
 -- | The 'elemIndex' function returns the index of the first element
 -- in the given stream which is equal (by '==') to the query element,
 --
--- /Beware/: 'elemIndex' @x@ @xs@ will diverge if none of the elements
+-- /Beware/: @'elemIndex' x xs@ will diverge if none of the elements
 -- of @xs@ equal @x@.
 elemIndex :: Eq a => a -> Stream a -> Int
 elemIndex x = findIndex (\y -> x == y)
@@ -359,7 +361,6 @@ elemIndex x = findIndex (\y -> x == y)
 -- @xs@ does not contain @x@.
 elemIndices :: Eq a => a -> Stream a -> Stream Int
 elemIndices x = findIndices (x==)
-
 
 -- | The 'findIndex' function takes a predicate and a stream and returns
 -- the index of the first element in the stream that satisfies the predicate,

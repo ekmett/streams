@@ -21,7 +21,7 @@ module Data.Stream.Branching (
    , unfold
   ) where
 
-import Prelude hiding (head)
+import Prelude hiding (head, tail)
 
 import Control.Applicative
 import Control.Comonad
@@ -43,6 +43,7 @@ head (a :< _) = a
 tail :: Stream f a -> f (Stream f a)
 tail (_ :< as) = as
 
+
 tails :: Functor f => Stream f a -> Stream f (Stream f a)
 tails = duplicate
 
@@ -55,21 +56,21 @@ instance Functor f => Functor (Stream f) where
 
 instance Functor f => Comonad (Stream f) where
   extract (a :< _) = a
-  extend f w = f w :< fmap (extend f) (body w)
-  duplicate w = w :< fmap duplicate (body w)
+  extend f w = f w :< fmap (extend f) (tail w)
+  duplicate w = w :< fmap duplicate (tail w)
 
 instance FunctorApply f => FunctorApply (Stream f) where
   (f :< fs) <.> (a :< as) = f a :< ((<.>) <$> fs <.> as)
-  (f :< fs) <.  (a :< as) = f :< ((<. ) <$> fs <.> as)
-  (f :< fs)  .> (a :< as) = a :< (( .>) <$> fs <.> as)
+  (f :< fs) <.  (_ :< as) = f :< ((<. ) <$> fs <.> as)
+  (_ :< fs)  .> (a :< as) = a :< (( .>) <$> fs <.> as)
 
 instance FunctorApply f => ComonadApply (Stream f)
 
 instance Applicative f => Applicative (Stream f) where
   pure a = as where as = a :< pure as
   (f :< fs) <*> (a :< as) = f a :< ((<*>) <$> fs <*> as)
-  (f :< fs) <*  (a :< as) = f :< ((<* ) <$> fs <*> as)
-  (f :< fs)  *> (a :< as) = a :< (( *>) <$> fs <*> as)
+  (f :< fs) <*  (_ :< as) = f :< ((<* ) <$> fs <*> as)
+  (_ :< fs)  *> (a :< as) = a :< (( *>) <$> fs <*> as)
 
 unfold :: Functor f => (b -> (a, f b)) -> b -> Stream f a
 unfold f c | (x, d) <- f c = x :< fmap (unfold f) d
