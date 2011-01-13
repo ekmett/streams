@@ -126,23 +126,24 @@ nonEmpty (a:as) = Just (a :| as)
 {-# INLINE nonEmpty #-}
 
 uncons :: NonEmpty a -> (a, Maybe (NonEmpty a))
-uncons (a :| as) = (a, nonEmpty as)
+uncons ~(a :| as) = (a, nonEmpty as)
 {-# INLINE uncons #-}
 
 instance Functor NonEmpty where
-  fmap f (a :| as) = f a :| fmap f as
-  b <$ (_ :| as)   = b   :| (b <$ as)
+  fmap f ~(a :| as) = f a :| fmap f as
+  b <$ ~(_ :| as)   = b   :| (b <$ as)
 
 instance Comonad NonEmpty where
-  extract (a :| _) = a
-  extend f w@(_ :| []) = f w :| []
-  extend f w@(_ :| a : as) = f w :| toList (extend f (a :| as))
+  extract ~(a :| _) = a
+  extend f w@ ~(_ :| aas) = f w :| case aas of
+      []     -> []
+      (a:as) -> toList (extend f (a :| as))
   
 instance FunctorApply NonEmpty where
   (<.>) = ap
 
 instance FunctorAlt NonEmpty where
-  (a :| as) <!> (b :| bs) = a :| (as ++ b : bs)
+  (a :| as) <!> ~(b :| bs) = a :| (as ++ b : bs)
 
 instance ComonadApply NonEmpty
 
@@ -154,24 +155,24 @@ instance ApplicativeAlt NonEmpty
 
 instance Monad NonEmpty where
   return a = a :| []
-  (a :| as) >>= f 
+  ~(a :| as) >>= f 
     | b :| bs  <- f a
     , bs'      <- as >>= toList . f
     = b :| (bs ++ bs')
 
 instance Traversable NonEmpty where
-  traverse f (a :| as) = (:|) <$> f a <*> traverse f as
+  traverse f ~(a :| as) = (:|) <$> f a <*> traverse f as
 
 instance Traversable1 NonEmpty where
   traverse1 f (a :| []) = (:|[]) <$> f a
   traverse1 f (a :| (b: bs)) = (\a' (b':| bs') -> a' :| b': bs') <$> f a <.> traverse1 f (b :| bs)
 
 instance Foldable NonEmpty where
-  foldr f z (a :| as) = f a (foldr f z as)
-  foldl f z (a :| as) = foldl f (f z a) as 
-  foldl1 f (a :| as) = foldl f a as
-  foldMap f (a :| as) = f a `mappend` foldMap f as
-  fold (m :| ms) = m `mappend` fold ms
+  foldr f z ~(a :| as) = f a (foldr f z as)
+  foldl f z ~(a :| as) = foldl f (f z a) as 
+  foldl1 f ~(a :| as) = foldl f a as
+  foldMap f ~(a :| as) = f a `mappend` foldMap f as
+  fold ~(m :| ms) = m `mappend` fold ms
 
 instance Foldable1 NonEmpty where
   foldMap1 f (a :| []) = f a
@@ -182,27 +183,27 @@ instance Semigroup (NonEmpty a) where
 
 -- | Extract the first element of the stream
 head :: NonEmpty a -> a
-head (a :| _) = a
+head ~(a :| _) = a
 {-# INLINE head #-}
 
 -- | Extract the possibly empty tail of the stream
 tail :: NonEmpty a -> [a]
-tail (_ :| as) = as
+tail ~(_ :| as) = as
 {-# INLINE tail #-}
 
 -- | Extract the last element of the stream
 last :: NonEmpty a -> a
-last (a :| as) = List.last (a : as)
+last ~(a :| as) = List.last (a : as)
 {-# INLINE last #-}
 
 -- | Extract everything except the last element of the stream
 init :: NonEmpty a -> [a]
-init (a :| as) = List.init (a : as)
+init ~(a :| as) = List.init (a : as)
 {-# INLINE init #-}
 
 -- | cons onto a stream
 (<|) :: a -> NonEmpty a -> NonEmpty a 
-a <| (b :| bs) = a :| b : bs
+a <| ~(b :| bs) = a :| b : bs
 {-# INLINE (<|) #-}
 
 cons :: a -> NonEmpty a -> NonEmpty a
@@ -222,7 +223,7 @@ fromList [] = error "NonEmpty.fromList: empty list"
 
 -- | Convert a stream to a list efficiently
 toList :: NonEmpty a -> [a]
-toList (a :| as) = a : as
+toList ~(a :| as) = a : as
 {-# INLINE toList #-}
 
 -- | Lift list operations to work on a 'NonEmpty' stream
@@ -232,7 +233,7 @@ lift f = fromList . f . Foldable.toList
 
 -- | map a function over a 'NonEmpty' stream
 map :: (a -> b) -> NonEmpty a -> NonEmpty b
-map f (a :| as) = f a :| fmap f as
+map f ~(a :| as) = f a :| fmap f as 
 {-# INLINE map #-}
 
 -- | The 'inits' function takes a stream @xs@ and returns all the
@@ -275,18 +276,19 @@ scanr f z = fromList . List.scanr f z . Foldable.toList
 -- | 'scanl1' is a variant of 'scanl' that has no starting value argument:
 --
 -- > scanl1 f [x1, x2, ...] == x1 :| [x1 `f` x2, x1 `f` (x2 `f` x3), ...]
-scanl1  :: (a -> a -> a) -> NonEmpty a -> NonEmpty a
-scanl1 f (a :| as) = fromList (List.scanl f a as)
+scanl1 :: (a -> a -> a) -> NonEmpty a -> NonEmpty a
+scanl1 f ~(a :| as) = fromList (List.scanl f a as)
 {-# INLINE scanl1 #-}
 
 -- | 'scanr1' is a variant of 'scanr' that has no starting value argument.
-scanr1  :: (a -> a -> a) -> NonEmpty a -> NonEmpty a
-scanr1 f (a :| as) = fromList (List.scanr1 f (a:as))
+scanr1 :: (a -> a -> a) -> NonEmpty a -> NonEmpty a
+scanr1 f ~(a :| as) = fromList (List.scanr1 f (a:as))
 {-# INLINE scanr1 #-}
 
 intersperse :: a -> NonEmpty a -> NonEmpty a
-intersperse _ bbs@(_ :| []) = bbs
-intersperse a     (b :| bs) = b :| a : List.intersperse a bs
+intersperse a ~(b :| bs) = b :| case bs of 
+    [] -> []
+    _ -> a : List.intersperse a bs
 {-# INLINE intersperse #-}
 
 -- | @'iterate' f x@ produces the infinite sequence
@@ -416,7 +418,7 @@ isPrefixOf (y:ys) (x :| xs) = (y == x) && List.isPrefixOf ys xs
 -- /Beware/: passing a negative integer as the first argument will cause
 -- an error.
 (!!) :: NonEmpty a -> Int -> a
-(!!) (x :| xs) n 
+(!!) ~(x :| xs) n 
   | n == 0 = x
   | n > 0  = xs List.!! (n - 1)
   | otherwise = error "NonEmpty.!! negative argument"
