@@ -51,7 +51,7 @@ instance Comonad Future where
   extract (Last a) = a
   extract (a :< _) = a
   extend f w@(_ :< as) = f w :< extend f as
-  extend f w@(Last a)  = Last (f w)
+  extend f w@(Last _)  = Last (f w)
 
 instance FunctorApply Future where
   Last f    <.> Last a    = Last (f a)

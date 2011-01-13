@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable, PatternGuards #-}
+{-# LANGUAGE PatternGuards #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Stream.Infinite
@@ -8,7 +8,7 @@
 --
 -- Maintainer  :  Edward Kmett <ekmett@gmail.com>
 -- Stability   :  provisional
--- Portability :  portable
+-- Portability :  portable (Haskell 2010)
 --
 ----------------------------------------------------------------------------
 module Data.Stream.Infinite (
@@ -32,37 +32,37 @@ module Data.Stream.Infinite (
    , iterate     -- :: (a -> a) -> a -> Stream a
    , repeat      -- :: a -> Stream a
    , cycle       -- :: NonEmpty a -> Stream a
-   , unfold
+   , unfold      -- :: (a -> (b, a)) -> a -> Stream b
    -- * Extracting sublists
-   , take
-   , drop
-   , splitAt
-   , takeWhile
-   , dropWhile
-   , span
-   , break
-   , filter
-   , partition
-   , group
+   , take        -- :: Int -> Stream a -> [a]
+   , drop        -- :: Int -> Stream a -> Stream a
+   , splitAt     -- :: Int -> Stream a -> ([a],Stream a)
+   , takeWhile   -- :: (a -> Bool) -> Stream a -> [a]
+   , dropWhile   -- :: (a -> Bool) -> Stream a -> Stream a
+   , span        -- :: (a -> Bool) -> Stream a -> ([a], Stream a)
+   , break       -- :: (a -> Bool) -> Stream a -> ([a], Stream a)
+   , filter      -- :: (a -> Bool) -> Stream a -> Stream a
+   , partition   -- :: (a -> Bool) -> Stream a -> (Stream a, Stream a)
+   , group       -- :: (a -> Bool) -> Stream a -> Stream (NonEmpty a)
    -- * Sublist predicates
-   , isPrefixOf
-   -- * Indexing streams
-   , (!!) 
-   , elemIndex
-   , elemIndices
-   , findIndex
-   , findIndices
+   , isPrefixOf  -- :: [a] -> Stream a -> Bool
+   -- * Indexing streams 
+   , (!!)        -- :: Int -> Stream a -> a
+   , elemIndex   -- :: Eq a => a -> Stream a -> Int
+   , elemIndices -- :: Eq a => a -> Stream a -> Stream Int
+   , findIndex   -- :: (a -> Bool) -> Stream a -> Int
+   , findIndices -- :: (a -> Bool) -> Stream a -> Stream Int
    -- * Zipping and unzipping streams
-   , zip
-   , zipWith
-   , unzip
+   , zip         -- :: Stream a -> Stream b -> Stream (a, b)
+   , zipWith     -- :: (a -> b -> c) -> Stream a -> Stream b -> Stream c
+   , unzip       -- :: Functor f => f (a, b) -> (f a, f b)
    -- * Functions on streams of characters
-   , words
-   , unwords
-   , lines
-   , unlines
+   , words       -- :: Stream Char -> Stream String
+   , unwords     -- :: Stream String -> Stream Char
+   , lines       -- :: Stream Char -> Stream String
+   , unlines     -- :: Stream String -> Stream Char
    -- * Converting to and from an infinite list
-   , fromList
+   , fromList    -- :: [a] -> Stream a
    ) where
 
 import Prelude hiding 
@@ -88,8 +88,12 @@ import Data.Semigroup.Traversable
 import Data.Semigroup.Foldable
 import Data.Stream.NonEmpty (NonEmpty(..))
 
-data Stream a = a :> Stream a
-  deriving (Data,Typeable,Show)
+data Stream a = a :> Stream a deriving 
+  ( Show
+#ifdef LANGUAGE_DeriveDataTypeable
+  , Data, Typeable
+#endif
+  )
 
 infixr 5 :>
 
@@ -104,10 +108,12 @@ instance Functor Stream where
 -- | Extract the first element of the sequence.
 head :: Stream a -> a
 head (a :> _) = a
+{-# INLINE head #-}
 
 -- | Extract the sequence following the head of the stream.
 tail :: Stream a -> Stream a
 tail (_ :> as) = as
+{-# INLINE tail #-}
 
 -- | The 'tails' function takes a stream @xs@ and returns all the
 -- suffixes of @xs@.

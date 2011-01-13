@@ -1,8 +1,8 @@
 name:          streams
 category:      Control, Comonads
-version:       0.0.1
+version:       0.1.0
 license:       BSD3
-cabal-version: >= 1.2
+cabal-version: >= 1.6
 license-file:  LICENSE
 author:        Edward A. Kmett
 maintainer:    Edward A. Kmett <ekmett@gmail.com>
@@ -14,6 +14,11 @@ copyright:     Copyright 2011 Edward Kmett
 synopsis:      Various Haskell 2010 stream comonads
 description:   Various Haskell 2010 stream comonads
 build-type:    Simple
+extra-source-files: README
+
+source-repository head
+  type: git
+  location: git://github.com/ekmett/streams.git
 
 library
   build-depends:
@@ -22,10 +27,19 @@ library
     functor-apply >= 0.7.4 && < 0.8,
     semigroups >= 0.3.2 && < 0.4
 
+  extensions: CPP
+  if impl(ghc)
+    cpp-options: -DLANGUAGE_DeriveDataTypeable
+    extensions: FlexibleContexts, DeriveDataTypeable
+
   exposed-modules:
     Data.Stream.Branching
     Data.Stream.Future
+    Data.Stream.Future.Skew
     Data.Stream.Infinite
+    Data.Stream.Infinite.Skew
+    Data.Stream.Infinite.Functional.Zipper
     Data.Stream.NonEmpty
 
   ghc-options: -Wall
+

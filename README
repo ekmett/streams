@@ -1,0 +1,41 @@
+-- currently implemented
+
+* Data.Stream.Branching       data Stream f a = a :< f (Stream a)
+* Data.Stream.NonEmpty        data NonEmpty a = a :| [a] 
+* Data.Stream.Future               data Future a = Last a | a :<   Future a
+* Data.Stream.Future.Skew          data Future a = Last a | !(Complete a) :< Future a
+* Data.Stream.Infinite                    data Future a = a :<   Future a
+* Data.Stream.Infinite.Skew               data Future a = !(Complete a) :< Future a
+* Data.Stream.Infinite.Functional.Zipper  data Zipper a = Zipper !(Integer -> a) !Integer
+
+-- TODO: refactor the existing Functional.Zipper to have a lower bound and add a Symmetric variant
+-- Data.Stream.Infinite.Functional.Zipper data Zipper a = Zipper !(Integer -> a) !Integer !Integer -- can seek arbitrarily
+
+Data.Stream.Causal               data Causal a = First a |   Causal a  :> a   
+Data.Stream.Causal.Infinite      data Causal a =             Causal a  :> a
+Data.Stream.Causal.Finite        data Causal a = First a | !(Causal a) :> a
+Data.Stream.Causal.Skew          data Causal a = First a |   Causal a  :> !(Complete a)
+Data.Stream.Causal.Infinite.Skew data Causal a =             Causal a  :> !(Complete a)
+
+Data.Stream.Future.Finite        data Future a = Last a | a :< !(Future a)
+
+Data.Stream.Zipper                         data Zipper a = Now !(Finite.Causal a) | !(Finite.Causal a) :| (Future a) 
+Data.Stream.Zipper.Symmetric               data Zipper a = Now !(Causal a)        | !(Causal a)        :| (Future a) 
+Data.Stream.Zipper.Infinite                data Zipper a =                          !(Finite.Causal a) :| Infinite.Future a
+Data.Stream.Zipper.Infinite.Symmetric      data Zipper a =         {- #UNPACK #-} !(Infinite.Causal a) :| Infinite.Future a
+Data.Stream.Zipper.Finite                  data Zipper a = Now !(Finite.Causal a) | !(Finite.Causal a) :| !(Finite.Future a)
+Data.Stream.Zipper.Skew                    data Zipper a = Zipper !(Seq a) !(Seq a) !(Skew.Future a)
+Data.Stream.Zipper.Skew.Symmetric          data Zipper a = Zipper !(S.Causal a) !(Seq a) !(Seq a) !(Skew.Future a)
+Data.Stream.Zipper.Infinite.Skew           data Zipper a = Zipper !(S.Causal a) !(Seq a) !(Seq a) !(IS.Future a)
+Data.Stream.Zipper.Infinite.Skew.Symmetric data Zipper a = Zipper !(IS.Causal a) !(Seq a) !(Seq a) !(IS.Future a)
+
+Data.Stream.Infinite.Functional.Future           data Future a = Future !(Integer -> a) !Integer -- increment only
+Data.Stream.Infinite.Functional.Causal           data Causal a = Causal !(Integer -> a) !Integer -- decrement only
+
+Data.Sequence.Future        data Future a = Future !(Int# -> a)      Int# Int#
+Data.Sequence.Causal        data Causal a = Causal !(Int# -> a) Int# Int#     
+Data.Sequence.Zipper        data Zipper a = Zipper !(Int# -> a) Int# Int# Int#
+
+Data.Tensors          data Tensors f a = Last a | a :-   Tensors f (f a)
+Data.Tensors.Infinite data Tensors f a =          a :-   Tensors f (f a)
+Data.Tensors.Finite   data Tensors f a = Last a | a :- !(Tensors f (f a))
