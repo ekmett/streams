@@ -18,17 +18,19 @@ module Data.Stream.Branching (
    , tail   -- Stream f a -> f (Stream f a)
    , tails  -- Stream f a -> Stream f (Stream f a)
    , inits1 -- Stream f a -> Stream f (NonEmpty a)
-   , unfold -- 
+   , scanr  -- (a -> f b -> b) -> Stream f a -> Stream f b
+   , scanl  -- (a -> b -> a) -> a -> Stream f b -> Stream f a
+   , unfold
   ) where
 
-import Prelude hiding (head, tail)
+import Prelude hiding (head, tail, scanr, scanl)
 
 import Control.Applicative
 import Control.Comonad
 import Control.Comonad.Apply
 import Control.Monad
 import Data.Functor.Apply
-import Data.Stream.NonEmpty hiding (tail, tails, unfold, head)
+import Data.Stream.NonEmpty hiding (tail, tails, unfold, head, scanr, scanl)
 import qualified Data.Stream.NonEmpty as NonEmpty
 
 #ifdef GHC_TYPEABLE
@@ -54,6 +56,14 @@ tails = duplicate
 -- | equivalent to inits sans the initial [] context
 inits1 :: Functor f => Stream f a -> Stream f (NonEmpty a)
 inits1 (a :< as) = (a :| []) :< (fmap (NonEmpty.cons a) . inits1 <$> as)
+
+scanr :: Functor f => (a -> f b -> b) -> Stream f a -> Stream f b
+scanr f (a :< as) = f a (head <$> bs) :< bs
+  where bs = scanr f <$> as
+
+scanl :: Functor f => (a -> b -> a) -> a -> Stream f b -> Stream f a 
+scanl f z (b :< bs) = z' :< fmap (scanl f z') bs
+  where z' = f z b
 
 instance Functor f => Functor (Stream f) where
   fmap f (a :< as) = f a :< fmap (fmap f) as
