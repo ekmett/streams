@@ -45,6 +45,7 @@ import Control.Arrow (first)
 import Control.Applicative hiding (empty)
 import Control.Comonad
 import Control.Comonad.Apply
+import Data.Distributive
 import Data.Functor.Alt
 import Data.Functor.Apply
 import Data.Foldable hiding (toList)
@@ -105,6 +106,7 @@ weight (Bin w _ _ _) = w
 data Stream a = !(Complete a) :< Stream a
 --  deriving Show
 
+
 instance Show a => Show (Stream a) where
   showsPrec d as = showParen (d >= 10) $ 
     showString "fromList " . showsPrec 11 (toList as)
@@ -138,6 +140,7 @@ instance FunctorAlt Stream where
     (q,0) -> as !! q
     (q,_) -> bs !! q
 
+
 instance Foldable Stream where
   foldMap f (t :< ts) = foldMap f t `mappend` foldMap f ts
   foldr f z (t :< ts) = foldr f (foldr f z ts) t
@@ -153,6 +156,9 @@ instance Traversable Stream where
 
 instance Traversable1 Stream where
   traverse1 f (t :< ts) = (:<) <$> traverse1 f t <.> traverse1 f ts
+
+instance Distributive Stream where
+  distribute w = tabulate (\i -> fmap (!! i) w)
 
 instance Semigroup (Stream a) where
   (<>) = (<!>)
@@ -179,6 +185,7 @@ mapWithIndex f0 as0 = spine f0 0 as0
 
 tabulate :: (Integer -> a) -> Stream a
 tabulate f = mapWithIndex (const . f) (pure ())
+
 
 indexed :: Stream a -> Stream (Integer, a)
 indexed = mapWithIndex (,)

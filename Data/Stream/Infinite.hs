@@ -84,6 +84,7 @@ import Data.Monoid
 import Data.Semigroup
 import Data.Foldable
 import Data.Traversable
+import Data.Distributive
 import Data.Semigroup.Traversable
 import Data.Semigroup.Foldable
 import Data.Stream.NonEmpty (NonEmpty(..))
@@ -104,6 +105,9 @@ map f (a :> as) = f a :> map f as
 instance Functor Stream where
   fmap = map
   b <$ _ = repeat b
+
+instance Distributive Stream where
+  distribute w = fmap head w :> distribute (fmap tail w)
 
 -- | Extract the first element of the sequence.
 head :: Stream a -> a

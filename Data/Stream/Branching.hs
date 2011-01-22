@@ -31,6 +31,7 @@ import Control.Comonad.Apply
 import Control.Monad
 import Data.Functor.Apply
 import Data.Stream.NonEmpty hiding (tail, tails, unfold, head, scanr, scanl)
+import Data.Distributive
 import qualified Data.Stream.NonEmpty as NonEmpty
 
 #ifdef GHC_TYPEABLE
@@ -40,6 +41,9 @@ import Data.Data
 infixr 5 :<
 
 data Stream f a = a :< f (Stream f a)
+
+instance Distributive f => Distributive (Stream f) where
+  distribute w = fmap head w :< fmap distribute (distribute (fmap tail w))
 
 head :: Stream f a -> a
 head (a :< _) = a
@@ -86,6 +90,7 @@ instance Applicative f => Applicative (Stream f) where
   (f :< fs) <*> (a :< as) = f a :< ((<*>) <$> fs <*> as)
   (f :< fs) <*  (_ :< as) = f :< ((<* ) <$> fs <*> as)
   (_ :< fs)  *> (a :< as) = a :< (( *>) <$> fs <*> as)
+
 
 unfold :: Functor f => (b -> (a, f b)) -> b -> Stream f a
 unfold f c | (x, d) <- f c = x :< fmap (unfold f) d
