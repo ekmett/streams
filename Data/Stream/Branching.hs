@@ -73,24 +73,25 @@ instance Functor f => Functor (Stream f) where
   fmap f (a :< as) = f a :< fmap (fmap f) as
   b <$ (_ :< as) = b :< fmap (b <$) as
 
-instance Functor f => Comonad (Stream f) where
-  extract (a :< _) = a
+instance Functor f => Extend (Stream f) where
   extend f w = f w :< fmap (extend f) (tail w)
   duplicate w = w :< fmap duplicate (tail w)
 
-instance FunctorApply f => FunctorApply (Stream f) where
+instance Functor f => Comonad (Stream f) where
+  extract (a :< _) = a
+
+instance Apply f => Apply (Stream f) where
   (f :< fs) <.> (a :< as) = f a :< ((<.>) <$> fs <.> as)
   (f :< fs) <.  (_ :< as) = f :< ((<. ) <$> fs <.> as)
   (_ :< fs)  .> (a :< as) = a :< (( .>) <$> fs <.> as)
 
-instance FunctorApply f => ComonadApply (Stream f)
+instance Apply f => ComonadApply (Stream f)
 
 instance Applicative f => Applicative (Stream f) where
   pure a = as where as = a :< pure as
   (f :< fs) <*> (a :< as) = f a :< ((<*>) <$> fs <*> as)
   (f :< fs) <*  (_ :< as) = f :< ((<* ) <$> fs <*> as)
   (_ :< fs)  *> (a :< as) = a :< (( *>) <$> fs <*> as)
-
 
 unfold :: Functor f => (b -> (a, f b)) -> b -> Stream f a
 unfold f c | (x, d) <- f c = x :< fmap (unfold f) d

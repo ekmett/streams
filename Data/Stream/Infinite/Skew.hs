@@ -68,11 +68,13 @@ instance Functor Complete where
   fmap f (Tip a) = Tip (f a)
   fmap f (Bin w a l r) = Bin w (f a) (fmap f l) (fmap f r)
 
+instance Extend Complete where
+  extend f w@Tip {} = Tip (f w)
+  extend f w@(Bin n _ l r) = Bin n (f w) (extend f l) (extend f r)
+
 instance Comonad Complete where
   extract (Tip a) = a
   extract (Bin _ a _ _) = a
-  extend f w@Tip {} = Tip (f w)
-  extend f w@(Bin n _ l r) = Bin n (f w) (extend f l) (extend f r)
 
 instance Foldable Complete where
   foldMap f (Tip a) = f a 
@@ -106,7 +108,6 @@ weight (Bin w _ _ _) = w
 data Stream a = !(Complete a) :< Stream a
 --  deriving Show
 
-
 instance Show a => Show (Stream a) where
   showsPrec d as = showParen (d >= 10) $ 
     showString "fromList " . showsPrec 11 (toList as)
@@ -114,15 +115,17 @@ instance Show a => Show (Stream a) where
 instance Functor Stream where
   fmap f (t :< ts) = fmap f t :< fmap f ts
 
-instance Comonad Stream where
-  extract = head
+instance Extend Stream where
   extend g0 (t :< ts) = go g0 t (:< ts) :< extend g0 ts
     where 
       go :: (Stream a -> b) -> Complete a -> (Complete a -> Stream a) -> Complete b
       go g w@Tip{}         f = Tip (g (f w))
       go g w@(Bin n _ l r) f = Bin n (g (f w)) (go g l (:< f r))  (go g r f)
 
-instance FunctorApply Stream where
+instance Comonad Stream where
+  extract = head
+
+instance Apply Stream where
   fs <.> as = mapWithIndex (\n f -> f (as !! n)) fs
   as <.  _  = as
   _   .> bs = bs
@@ -135,7 +138,7 @@ instance Applicative Stream where
   (<* ) = (<. )
   ( *>) = ( .>)
 
-instance FunctorAlt Stream where
+instance Alt Stream where
   as <!> bs = tabulate $ \i -> case quotRem i 2 of 
     (q,0) -> as !! q
     (q,_) -> bs !! q

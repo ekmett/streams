@@ -124,12 +124,14 @@ tail (_ :> as) = as
 tails :: Stream a -> Stream (Stream a)
 tails w = w :> tails (tail w)
 
-instance Comonad Stream where
-  extract = head
+instance Extend Stream where
   duplicate = tails
   extend f w = f w :> extend f (tail w)
 
-instance FunctorApply Stream where
+instance Comonad Stream where
+  extract = head
+
+instance Apply Stream where
   (f :> fs) <.> (a :> as) = f a :> (fs <.> as)
   as        <.  _         = as
   _          .> bs        = bs

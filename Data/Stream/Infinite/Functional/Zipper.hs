@@ -98,11 +98,13 @@ a <| (n :~ f) = n :~ \z -> case compare z n of
 uncons :: Zipper a -> (a, Zipper a)
 uncons (n :~ f) = (f n, n + 1 :~ f)
 
-instance Comonad Zipper where
-  extract (n :~ f) = f n
+instance Extend Zipper where
   duplicate (n :~ f) = n :~ (:~ f)
 
-instance FunctorApply Zipper where
+instance Comonad Zipper where
+  extract (n :~ f) = f n
+
+instance Apply Zipper where
   (nf :~ f) <.> (na :~ a) 
     | dn <- na - nf
     = nf :~ \n -> f n (a (n + dn))

@@ -133,16 +133,18 @@ instance Functor NonEmpty where
   fmap f ~(a :| as) = f a :| fmap f as
   b <$ ~(_ :| as)   = b   :| (b <$ as)
 
-instance Comonad NonEmpty where
-  extract ~(a :| _) = a
+instance Extend NonEmpty where
   extend f w@ ~(_ :| aas) = f w :| case aas of
       []     -> []
       (a:as) -> toList (extend f (a :| as))
+
+instance Comonad NonEmpty where
+  extract ~(a :| _) = a
   
-instance FunctorApply NonEmpty where
+instance Apply NonEmpty where
   (<.>) = ap
 
-instance FunctorAlt NonEmpty where
+instance Alt NonEmpty where
   (a :| as) <!> ~(b :| bs) = a :| (as ++ b : bs)
 
 instance ComonadApply NonEmpty

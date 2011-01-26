@@ -107,13 +107,15 @@ instance Traversable1 Future where
   traverse1 f (Last a)  = Last <$> f a
   traverse1 f (a :< as) = (:<) <$> f a <.> traverse1 f as
 
-instance Comonad Future where
-  extract = head
+instance Extend Future where
   duplicate = tails
   extend f w@(_ :< as) = f w :< extend f as
   extend f w@(Last _)  = Last (f w)
 
-instance FunctorApply Future where
+instance Comonad Future where
+  extract = head
+
+instance Apply Future where
   Last f    <.> Last a    = Last (f a)
   (f :< _)  <.> Last a    = Last (f a)
   Last f    <.> (a :< _ ) = Last (f a)
@@ -127,7 +129,7 @@ instance FunctorApply Future where
   Last _     .> (b :< _) = Last b
   (_ :< as)  .> (b :< bs) = b :< (as .> bs)
   
-instance FunctorAlt Future where
+instance Alt Future where
   Last a    <!> bs = a :< bs
   (a :< as) <!> bs = a :< (as <!> bs)
 
