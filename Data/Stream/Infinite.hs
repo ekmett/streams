@@ -76,7 +76,6 @@ import Prelude hiding
 
 import Control.Applicative
 import Control.Comonad
-import Control.Comonad.Apply
 import Data.Char (isSpace)
 import Data.Data
 import Data.Functor.Apply
@@ -135,8 +134,6 @@ instance Apply Stream where
   (f :> fs) <.> (a :> as) = f a :> (fs <.> as)
   as        <.  _         = as
   _          .> bs        = bs
-
-instance ComonadApply Stream 
 
 -- | 'repeat' @x@ returns a constant stream, where all elements are
 -- equal to @x@.

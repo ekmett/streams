@@ -27,7 +27,6 @@ import Prelude hiding (head, tail, scanr, scanl)
 
 import Control.Applicative
 import Control.Comonad
-import Control.Comonad.Apply
 import Control.Monad
 import Data.Functor.Apply
 import Data.Stream.NonEmpty hiding (tail, tails, unfold, head, scanr, scanl)
@@ -84,8 +83,6 @@ instance Apply f => Apply (Stream f) where
   (f :< fs) <.> (a :< as) = f a :< ((<.>) <$> fs <.> as)
   (f :< fs) <.  (_ :< as) = f :< ((<. ) <$> fs <.> as)
   (_ :< fs)  .> (a :< as) = a :< (( .>) <$> fs <.> as)
-
-instance Apply f => ComonadApply (Stream f)
 
 instance Applicative f => Applicative (Stream f) where
   pure a = as where as = a :< pure as

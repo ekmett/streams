@@ -51,7 +51,6 @@ import Prelude hiding
 
 import Control.Applicative
 import Control.Comonad
-import Control.Comonad.Apply
 -- import Data.Char (isSpace)
 import Data.Data
 import Data.Functor.Apply
@@ -110,8 +109,6 @@ instance Apply Zipper where
     = nf :~ \n -> f n (a (n + dn))
   as        <.  _         = as
   _          .> bs        = bs
-
-instance ComonadApply Zipper 
 
 instance Applicative Zipper where
   pure = repeat

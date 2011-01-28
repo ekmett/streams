@@ -1,6 +1,6 @@
 name:          streams
 category:      Control, Comonads
-version:       0.4
+version:       0.5.0
 license:       BSD3
 cabal-version: >= 1.6
 license-file:  LICENSE
@@ -75,7 +75,7 @@ library
   build-depends:
     base >= 4 && < 4.4,
     comonad >= 0.9 && < 0.10,
-    functor-apply >= 0.9 && < 0.10,
+    functor-apply >= 0.10 && < 0.11,
     distributive >= 0.1 && < 0.2,
     semigroups >= 0.3.4 && < 0.4
 

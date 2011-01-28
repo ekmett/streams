@@ -88,9 +88,7 @@ import Prelude hiding
   )
 
 import Control.Applicative
-import Control.Applicative.Alt
 import Control.Comonad
-import Control.Comonad.Apply
 import Control.Monad
 import Data.Functor.Alt
 import Data.Foldable hiding (toList)
@@ -147,13 +145,9 @@ instance Apply NonEmpty where
 instance Alt NonEmpty where
   (a :| as) <!> ~(b :| bs) = a :| (as ++ b : bs)
 
-instance ComonadApply NonEmpty
-
 instance Applicative NonEmpty where
   pure a = a :| []
   (<*>) = ap
-
-instance ApplicativeAlt NonEmpty
 
 instance Monad NonEmpty where
   return a = a :| []

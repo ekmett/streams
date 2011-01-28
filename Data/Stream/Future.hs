@@ -24,9 +24,7 @@ module Data.Stream.Future
 
 import Prelude hiding (head, tail, map, length)
 import Control.Applicative
-import Control.Applicative.Alt
 import Control.Comonad
-import Control.Comonad.Apply
 import Data.Foldable
 import Data.Functor.Alt
 import Data.Traversable
@@ -136,14 +134,10 @@ instance Alt Future where
 instance Semigroup (Future a) where
   (<>) = (<!>)
   
-instance ComonadApply Future
-
 instance Applicative Future where
   pure = Last
   (<*>) = (<.>)
   (<* ) = (<. )
   ( *>) = ( .>)
-
-instance ApplicativeAlt Future
 
 

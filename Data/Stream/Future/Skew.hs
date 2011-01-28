@@ -48,7 +48,6 @@ module Data.Stream.Future.Skew
 
 import Control.Applicative hiding (empty)
 import Control.Comonad
-import Control.Comonad.Apply
 import Data.Functor.Alt
 import Data.Functor.Apply
 import Data.Foldable hiding (toList)
@@ -145,8 +144,6 @@ instance Apply Future where
   Tip f :< fs          <.> Tip a :< as          = f a <| (fs             <.> as            )
   Tip f :< fs          <.> Bin _ a la ra :< as  = f a <| (fs             <.> la :< ra :< as)
   Tip f :< fs          <.> Last (Bin _ a la ra) = f a <| (fs             <.> la :< Last ra )
-
-instance ComonadApply Future
 
 instance Applicative Future where
   pure = repeat

@@ -44,7 +44,6 @@ module Data.Stream.Infinite.Skew
 import Control.Arrow (first)
 import Control.Applicative hiding (empty)
 import Control.Comonad
-import Control.Comonad.Apply
 import Data.Distributive
 import Data.Functor.Alt
 import Data.Functor.Apply
@@ -129,8 +128,6 @@ instance Apply Stream where
   fs <.> as = mapWithIndex (\n f -> f (as !! n)) fs
   as <.  _  = as
   _   .> bs = bs
-
-instance ComonadApply Stream
 
 instance Applicative Stream where
   pure = repeat
