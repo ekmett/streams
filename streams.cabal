@@ -1,6 +1,6 @@
 name:          streams
 category:      Control, Comonads
-version:       0.5.1
+version:       0.5.1.1
 license:       BSD3
 cabal-version: >= 1.6
 license-file:  LICENSE
@@ -11,6 +11,7 @@ homepage:      http://github.com/ekmett/streams
 copyright:     Copyright 2011 Edward Kmett
                Copyright 2010 Tony Morris, Oliver Taylor, Eelis van der Weegen
                Copyright 2007-2010 Wouter Swierstra, Bas van Dijk
+               Copyright 2008 Iavor S. Diatchki
 synopsis:      Various Haskell 2010 stream comonads
 build-type:    Simple
 extra-source-files: README
