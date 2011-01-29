@@ -1,6 +1,6 @@
 name:          streams
 category:      Control, Comonads
-version:       0.5.1.1
+version:       0.5.1.2
 license:       BSD3
 cabal-version: >= 1.6
 license-file:  LICENSE
@@ -64,9 +64,14 @@ description:
   * "Data.Stream.Supply" provides a comonadic supply of unique values, which are
     generated impurely as the tree is explored.
   .
+  /Changes since 0.5.1/:
+  .
+  * Removed a redundant UNPACK pragma
+  .
   /Changes since 0.5/:
+  .
   * Data.Stream.Supply added
-
+  .
   /Changes since 0.1/: 
   .
   * A number of strictness issues with 'NonEmpty' were fixed

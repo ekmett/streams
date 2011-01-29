@@ -61,7 +61,7 @@ infixr 5 :<, <|
 
 data Complete a 
     = Tip a
-    | Bin {-# UNPACK #-} !Integer a !(Complete a) !(Complete a)
+    | Bin !Integer a !(Complete a) !(Complete a)
     deriving Show
 
 instance Functor Complete where
