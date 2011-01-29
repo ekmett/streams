@@ -1,6 +1,6 @@
 name:          streams
 category:      Control, Comonads
-version:       0.5.0
+version:       0.5.1
 license:       BSD3
 cabal-version: >= 1.6
 license-file:  LICENSE
@@ -60,6 +60,12 @@ description:
   .
   > data Zipper a = !Integer :~ (Integer -> a)
   .
+  * "Data.Stream.Supply" provides a comonadic supply of unique values, which are
+    generated impurely as the tree is explored.
+  .
+  /Changes since 0.5/:
+  * Data.Stream.Supply added
+
   /Changes since 0.1/: 
   .
   * A number of strictness issues with 'NonEmpty' were fixed
@@ -70,7 +76,6 @@ source-repository head
   type: git
   location: git://github.com/ekmett/streams.git
   
-
 library
   build-depends:
     base >= 4 && < 4.4,
@@ -92,6 +97,7 @@ library
     Data.Stream.Infinite
     Data.Stream.Infinite.Skew
     Data.Stream.Infinite.Functional.Zipper
+    Data.Stream.Supply
 
   ghc-options: -Wall
 

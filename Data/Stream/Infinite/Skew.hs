@@ -39,6 +39,7 @@ module Data.Stream.Infinite.Skew
     , from
     , indexed
     , interleave
+    , tabulate
     ) where 
 
 import Control.Arrow (first)
