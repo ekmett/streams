@@ -29,9 +29,9 @@ import Control.Applicative
 import Control.Comonad
 import Control.Monad
 import Data.Functor.Apply
-import Data.Stream.NonEmpty hiding (tail, tails, unfold, head, scanr, scanl)
+import Data.List.NonEmpty hiding (tail, tails, unfold, head, scanr, scanl)
 import Data.Distributive
-import qualified Data.Stream.NonEmpty as NonEmpty
+import qualified Data.List.NonEmpty as NonEmpty
 
 #ifdef GHC_TYPEABLE
 import Data.Data

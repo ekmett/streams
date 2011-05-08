@@ -1,6 +1,6 @@
 name:          streams
 category:      Control, Comonads
-version:       0.6.3
+version:       0.7.0
 license:       BSD3
 cabal-version: >= 1.6
 license-file:  LICENSE
@@ -35,13 +35,6 @@ description:
   . 
   >
   .
-  * "Data.Stream.NonEmpty" provides a non-empty list comonad where the Applicative and Monad work like those of the @[a]@. 
-    Being non-empty, it trades in the 'Alternative' and 'Monoid' instances of @[a]@ for weaker append-based 'FunctorAlt' and 'Semigroup'
-    instances while becoming a member of 'Comonad' and 'ComonadApply'. Acting like a list, the semantics of '<*>' and
-    '<.>' take a cross-product of membership from both 'NonEmpty' lists rather than zipping like a 'Future'
-  .
-  > data NonEmpty a = a :| [a]
-  .
   * "Data.Stream.Infinite" provides a coinductive infinite anti-causal stream. The 'Comonad' provides access to the tail of the
     stream and the 'Applicative' zips streams together. Unlike 'Future', infinite stream form a 'Monad'. The monad diagonalizes 
     the 'Stream', which is consistent with the behavior of the 'Applicative', and the view of a 'Stream' as a isomorphic to the reader 
@@ -64,6 +57,10 @@ description:
   * "Data.Stream.Supply" provides a comonadic supply of unique values, which are
     generated impurely as the tree is explored.
   .
+  /Changes since 0.6.3/:
+  .
+  * "Data.Stream.NonEmpty" renamed to "Data.List.NonEmpty" and pushed upstream into the semigroups package.
+  .
   /Changes since 0.5.1/:
   .
   * Removed a redundant UNPACK pragma
@@ -85,10 +82,10 @@ source-repository head
 library
   build-depends:
     base >= 4 && < 4.4,
-    comonad >= 1.0.3 && < 1.1,
+    comonad >= 1.1 && < 1.2,
     distributive >= 0.2 && < 0.3,
-    semigroupoids >= 1.1.3 && < 1.2, 
-    semigroups >= 0.4 && < 0.5
+    semigroupoids >= 1.2.1 && < 1.3, 
+    semigroups >= 0.5 && < 0.6
 
   extensions: CPP
   if impl(ghc)
@@ -99,7 +96,6 @@ library
     Data.Stream.Branching
     Data.Stream.Future
     Data.Stream.Future.Skew
-    Data.Stream.NonEmpty
     Data.Stream.Infinite
     Data.Stream.Infinite.Skew
     Data.Stream.Infinite.Functional.Zipper

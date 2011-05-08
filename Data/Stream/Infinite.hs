@@ -86,7 +86,7 @@ import Data.Traversable
 import Data.Distributive
 import Data.Semigroup.Traversable
 import Data.Semigroup.Foldable
-import Data.Stream.NonEmpty (NonEmpty(..))
+import Data.List.NonEmpty (NonEmpty(..))
 
 data Stream a = a :> Stream a deriving 
   ( Show
