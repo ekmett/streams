@@ -184,7 +184,7 @@ repeat a0 = go a0 (Tip a0)
 replicate :: Int -> a -> Future a
 replicate n a
   | n <= 0    = error "replicate: non-positive argument"
-  | otherwise = go 1 n a (Tip a) (\0 r -> r)
+  | otherwise = go 1 n a (Tip a) (\ _ r -> r)
   where 
   -- invariants: 
   -- tb is a complete tree of i nodes all equal to b
