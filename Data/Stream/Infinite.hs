@@ -44,6 +44,7 @@ module Data.Stream.Infinite (
    , filter      -- :: (a -> Bool) -> Stream a -> Stream a
    , partition   -- :: (a -> Bool) -> Stream a -> (Stream a, Stream a)
    , group       -- :: (a -> Bool) -> Stream a -> Stream (NonEmpty a)
+   , groupBy     -- :: (a -> a -> Bool) -> Stream a -> Stream (NonEmpty a)
    -- * Sublist predicates
    , isPrefixOf  -- :: [a] -> Stream a -> Bool
    -- * Indexing streams 
