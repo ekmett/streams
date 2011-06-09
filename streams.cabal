@@ -1,6 +1,6 @@
 name:          streams
 category:      Control, Comonads
-version:       0.7.2
+version:       0.8.0
 license:       BSD3
 cabal-version: >= 1.6
 license-file:  LICENSE
@@ -17,11 +17,6 @@ build-type:    Simple
 extra-source-files: README
 description:   
   Various Haskell 2010 stream comonads.
-  .
-  * "Data.Stream.Branching" provides an \"f-Branching Stream\" comonad, aka the cofree comonad, or generalized rose tree. 
-  .
-  > data Stream f a = a :< f (Stream a)
-  .
   * "Data.Stream.Future" provides a coinductive anti-causal stream, or non-empty 'ZipList'. The comonad provides access to only the 
     tail of the stream. Like a conventional 'ZipList', this is /not/ a monad.
   .
@@ -93,7 +88,6 @@ library
     extensions: FlexibleContexts, DeriveDataTypeable
 
   exposed-modules:
-    Data.Stream.Branching
     Data.Stream.Future
     Data.Stream.Future.Skew
     Data.Stream.Infinite
