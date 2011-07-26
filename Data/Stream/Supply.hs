@@ -1,4 +1,4 @@
-{-# LANGUAGE CPP, FlexibleContexts, UndecidableInstances #-}
+{-# LANGUAGE CPP, FlexibleContexts #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Stream.Supply

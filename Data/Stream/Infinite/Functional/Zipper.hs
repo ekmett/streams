@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable, PatternGuards, BangPatterns #-}
+{-# LANGUAGE CPP, PatternGuards, BangPatterns #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Zipper.Infinite.Functional.Zipper
@@ -52,7 +52,9 @@ import Prelude hiding
 import Control.Applicative
 import Control.Comonad
 -- import Data.Char (isSpace)
+#ifdef LANGUAGE_DeriveDataTypeable
 import Data.Data
+#endif
 import Data.Functor.Apply
 -- import Data.Monoid
 import Data.Semigroup
@@ -63,7 +65,9 @@ import Data.Semigroup
 -- import Data.Zipper.NonEmpty (NonEmpty(..))
 
 data Zipper a = !Integer :~ !(Integer -> a)
+#ifdef LANGUAGE_DeriveDataTypeable
   deriving Typeable
+#endif
 
 toSequence :: (Integer -> a) -> Zipper a
 toSequence = (0 :~) 
