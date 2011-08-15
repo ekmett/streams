@@ -80,7 +80,6 @@ import Control.Comonad
 import Data.Char (isSpace)
 import Data.Data
 import Data.Functor.Apply
-import Data.Monoid
 import Data.Semigroup
 import Data.Foldable
 import Data.Traversable

@@ -45,7 +45,6 @@ import Data.Functor.Apply
 import Data.Foldable
 import Data.IORef(newIORef, atomicModifyIORef)
 import Data.Traversable
-import Data.Monoid
 import Data.Semigroup
 import Data.Semigroup.Foldable
 import Data.Semigroup.Traversable

@@ -54,7 +54,6 @@ import qualified Data.Traversable as Traversable
 import Data.Semigroup hiding (Last)
 import Data.Semigroup.Foldable
 import Data.Semigroup.Traversable
-import Data.Monoid (Monoid(mappend))
 import Prelude hiding (null, head, tail, drop, dropWhile, length, foldr, last, span, repeat, replicate, (!!), break)
 
 infixr 5 :<, <|
