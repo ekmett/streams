@@ -49,10 +49,8 @@ module Data.Stream.Future.Skew
 import Control.Applicative hiding (empty)
 import Control.Comonad
 import Data.Functor.Alt
-import Data.Functor.Apply
 import Data.Foldable hiding (toList)
 import Data.Traversable (Traversable, traverse)
-import qualified Data.Traversable as Traversable
 import Data.Semigroup hiding (Last)
 import Data.Semigroup.Foldable
 import Data.Semigroup.Traversable
