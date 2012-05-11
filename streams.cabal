@@ -1,6 +1,6 @@
 name:          streams
 category:      Control, Comonads
-version:       0.8.2
+version:       0.8.2.1
 license:       BSD3
 cabal-version: >= 1.6
 license-file:  LICENSE
@@ -8,38 +8,39 @@ author:        Edward A. Kmett
 maintainer:    Edward A. Kmett <ekmett@gmail.com>
 stability:     provisional
 homepage:      http://github.com/ekmett/streams
+homepage:      http://github.com/ekmett/streams/issues
 copyright:     Copyright 2011 Edward Kmett
                Copyright 2010 Tony Morris, Oliver Taylor, Eelis van der Weegen
                Copyright 2007-2010 Wouter Swierstra, Bas van Dijk
                Copyright 2008 Iavor S. Diatchki
 synopsis:      Various Haskell 2010 stream comonads
 build-type:    Simple
-extra-source-files: README
-description:   
+extra-source-files: README .travis.yml
+description:
   Various Haskell 2010 stream comonads.
-  * "Data.Stream.Future" provides a coinductive anti-causal stream, or non-empty 'ZipList'. The comonad provides access to only the 
+  * "Data.Stream.Future" provides a coinductive anti-causal stream, or non-empty 'ZipList'. The comonad provides access to only the
     tail of the stream. Like a conventional 'ZipList', this is /not/ a monad.
   .
   > data Future a = Last a | a :< Future a
   .
   * "Data.Stream.Future.Skew" provides a non-empty skew-binary random-access-list with the semantics of @Data.Stream.Future@. As with
-    "Data.Stream.Future" this stream is not a 'Monad', since the 'Applicative' instance zips streams of potentially differing lengths. 
-    The random-access-list structure provides a number of operations logarithmic access time, but makes 'Data.Stream.Future.Skew.cons' 
-    less productive. Where applicable "Data.Stream.Infinite.Skew" may be more efficient, due to a lazier and more efficient 'Applicative' 
+    "Data.Stream.Future" this stream is not a 'Monad', since the 'Applicative' instance zips streams of potentially differing lengths.
+    The random-access-list structure provides a number of operations logarithmic access time, but makes 'Data.Stream.Future.Skew.cons'
+    less productive. Where applicable "Data.Stream.Infinite.Skew" may be more efficient, due to a lazier and more efficient 'Applicative'
     instance.
-  . 
+  .
   >
   .
   * "Data.Stream.Infinite" provides a coinductive infinite anti-causal stream. The 'Comonad' provides access to the tail of the
-    stream and the 'Applicative' zips streams together. Unlike 'Future', infinite stream form a 'Monad'. The monad diagonalizes 
-    the 'Stream', which is consistent with the behavior of the 'Applicative', and the view of a 'Stream' as a isomorphic to the reader 
+    stream and the 'Applicative' zips streams together. Unlike 'Future', infinite stream form a 'Monad'. The monad diagonalizes
+    the 'Stream', which is consistent with the behavior of the 'Applicative', and the view of a 'Stream' as a isomorphic to the reader
     monad from the natural numbers. Being infinite in length, there is no 'Alternative' instance, but instead the 'FunctorAlt'
     instance provides access to the 'Semigroup' of interleaving streams.
   .
   > data Stream a = a :< Stream a
   .
   * "Data.Stream.Infinite.Skew" provides an infinite skew-binary random-access-list with the semantics of "Data.Stream.Infinite"
-    Since every stream is infinite, the 'Applicative' instance can be considerably less strict than the corresponding instance for 
+    Since every stream is infinite, the 'Applicative' instance can be considerably less strict than the corresponding instance for
     "Data.Stream.Future.Skew" and performs asymptotically better.
   .
   >
@@ -64,7 +65,7 @@ description:
   .
   * Data.Stream.Supply added
   .
-  /Changes since 0.1/: 
+  /Changes since 0.1/:
   .
   * A number of strictness issues with 'NonEmpty' were fixed
   .
@@ -73,7 +74,7 @@ description:
 source-repository head
   type: git
   location: git://github.com/ekmett/streams.git
-  
+
 library
   other-extensions:
     PatternGuards
@@ -81,10 +82,10 @@ library
 
   build-depends:
     base          >= 4       && < 5,
-    comonad       >= 1.1.1.3 && < 1.2,
+    comonad       >= 1.1.1.5 && < 1.2,
     distributive  >= 0.2.1   && < 0.3,
-    semigroupoids >= 1.3     && < 1.4,
-    semigroups    >= 0.8.2   && < 0.9
+    semigroupoids >= 1.3.1.2 && < 1.4,
+    semigroups    >= 0.8.3.1 && < 0.9
 
   extensions: CPP
   if impl(ghc)
