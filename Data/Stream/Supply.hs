@@ -42,6 +42,7 @@ module Data.Stream.Supply
 import Control.Applicative
 import Control.Comonad
 import Data.Functor.Apply
+import Data.Functor.Extend
 import Data.Foldable
 import Data.IORef(newIORef, atomicModifyIORef)
 import Data.Traversable
@@ -75,10 +76,12 @@ instance Functor Supply where
   a <$ _ = pure a
 
 instance Extend Supply where
-  extend f s@(Supply _ l r) = Supply (f s) (extend f l) (extend f r)
-  duplicate s@(Supply _ l r) = Supply s (duplicate l) (duplicate r)
+  extended f s@(Supply _ l r) = Supply (f s) (extended f l) (extended f r)
+  duplicated s@(Supply _ l r) = Supply s (duplicated l) (duplicated r)
 
 instance Comonad Supply where
+  extend f s@(Supply _ l r) = Supply (f s) (extend f l) (extend f r)
+  duplicate s@(Supply _ l r) = Supply s (duplicate l) (duplicate r)
   extract (Supply a _ _) = a
 
 instance Apply Supply where

@@ -47,6 +47,7 @@ import Control.Applicative hiding (empty)
 import Control.Comonad
 import Data.Distributive
 import Data.Functor.Alt
+import Data.Functor.Extend
 import Data.Foldable hiding (toList)
 import Data.Traversable
 import Data.Semigroup hiding (Last)
@@ -66,10 +67,12 @@ instance Functor Complete where
   fmap f (Bin w a l r) = Bin w (f a) (fmap f l) (fmap f r)
 
 instance Extend Complete where
-  extend f w@Tip {} = Tip (f w)
-  extend f w@(Bin n _ l r) = Bin n (f w) (extend f l) (extend f r)
+  extended f w@Tip {} = Tip (f w)
+  extended f w@(Bin n _ l r) = Bin n (f w) (extended f l) (extended f r)
 
 instance Comonad Complete where
+  extend f w@Tip {} = Tip (f w)
+  extend f w@(Bin n _ l r) = Bin n (f w) (extend f l) (extend f r)
   extract (Tip a) = a
   extract (Bin _ a _ _) = a
 
@@ -113,19 +116,25 @@ instance Functor Stream where
   fmap f (t :< ts) = fmap f t :< fmap f ts
 
 instance Extend Stream where
+  extended = extend
+
+instance Comonad Stream where
   extend g0 (t :< ts) = go g0 t (:< ts) :< extend g0 ts
-    where 
+    where
       go :: (Stream a -> b) -> Complete a -> (Complete a -> Stream a) -> Complete b
       go g w@Tip{}         f = Tip (g (f w))
       go g w@(Bin n _ l r) f = Bin n (g (f w)) (go g l (:< f r))  (go g r f)
-
-instance Comonad Stream where
   extract = head
 
 instance Apply Stream where
   fs <.> as = mapWithIndex (\n f -> f (as !! n)) fs
   as <.  _  = as
   _   .> bs = bs
+
+instance ComonadApply Stream where
+  (<@>) = (<.>)
+  (<@) = (<.)
+  (@>) = (.>)
 
 instance Applicative Stream where
   pure = repeat

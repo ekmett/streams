@@ -11,13 +11,13 @@
 -- Portability :  portable
 --
 -- Anticausal streams implemented as non-empty skew binary random access lists
--- 
+--
 -- The Applicative zips streams, but since these are potentially infinite
--- this is stricter than would be desired. You almost always want 
+-- this is stricter than would be desired. You almost always want
 ------------------------------------------------------------------------------
 
 
-module Data.Stream.Future.Skew 
+module Data.Stream.Future.Skew
     ( Future(..)
     , (<|)      -- O(1)
     , cons
@@ -33,22 +33,23 @@ module Data.Stream.Future.Skew
     , indexed
     , from
     , break
-    , span 
+    , span
     , split     -- O(log n)
     , splitW    -- O(log n)
-    , repeat   
-    , replicate -- O(log n) 
+    , repeat
+    , replicate -- O(log n)
     , insert    -- O(n)
     , insertBy
     , update
     , adjust    -- O(log n)
     , fromList
     , toFuture
-    ) where 
+    ) where
 
 import Control.Applicative hiding (empty)
 import Control.Comonad
 import Data.Functor.Alt
+import Data.Functor.Extend
 import Data.Foldable hiding (toList)
 import Data.Traversable (Traversable, traverse)
 import Data.Semigroup hiding (Last)
@@ -58,7 +59,7 @@ import Prelude hiding (null, head, tail, drop, dropWhile, length, foldr, last, s
 
 infixr 5 :<, <|
 
-data Complete a 
+data Complete a
     = Tip a
     | Bin {-# UNPACK #-} !Int a !(Complete a) !(Complete a)
     deriving Show
@@ -68,15 +69,16 @@ instance Functor Complete where
   fmap f (Bin w a l r) = Bin w (f a) (fmap f l) (fmap f r)
 
 instance Extend Complete where
-  extend f w@Tip {} = Tip (f w)
-  extend f w@(Bin n _ l r) = Bin n (f w) (extend f l) (extend f r)
+  extended = extend
 
 instance Comonad Complete where
+  extend f w@Tip {} = Tip (f w)
+  extend f w@(Bin n _ l r) = Bin n (f w) (extend f l) (extend f r)
   extract (Tip a) = a
   extract (Bin _ a _ _) = a
 
 instance Foldable Complete where
-  foldMap f (Tip a) = f a 
+  foldMap f (Tip a) = f a
   foldMap f (Bin _ a l r) = f a `mappend` foldMap f l `mappend` foldMap f r
   foldr f z (Tip a) = f a z
   foldr f z (Bin _ a l r) = f a (foldr f (foldr f z r) l)
@@ -86,14 +88,14 @@ instance Foldable1 Complete where
   foldMap1 f (Bin _ a l r) = f a <> foldMap1 f l <> foldMap1 f r
 
 instance Traversable Complete where
-  traverse f (Tip a) = Tip <$> f a 
+  traverse f (Tip a) = Tip <$> f a
   traverse f (Bin n a l r) = Bin n <$> f a <*> traverse f l <*> traverse f r
 
 instance Traversable1 Complete where
-  traverse1 f (Tip a) = Tip <$> f a 
+  traverse1 f (Tip a) = Tip <$> f a
   traverse1 f (Bin n a l r) = Bin n <$> f a <.> traverse1 f l <.> traverse1 f r
 
-bin :: a -> Complete a -> Complete a -> Complete a 
+bin :: a -> Complete a -> Complete a -> Complete a
 bin a l r = Bin (1 + weight l + weight r) a l r
 {-# INLINE bin #-}
 
@@ -103,15 +105,15 @@ weight (Bin w _ _ _) = w
 {-# INLINE weight #-}
 
 -- A future is a non-empty skew binary random access list of nodes.
--- The last node, however, is allowed to contain fewer values. 
-data Future a 
-  = Last !(Complete a) 
+-- The last node, however, is allowed to contain fewer values.
+data Future a
+  = Last !(Complete a)
   | !(Complete a) :< Future a
 --  deriving Show
 
 
 instance Show a => Show (Future a) where
-  showsPrec d as = showParen (d >= 10) $ 
+  showsPrec d as = showParen (d >= 10) $
     showString "fromList " . showsPrec 11 (toList as)
 
 instance Functor Future where
@@ -119,10 +121,11 @@ instance Functor Future where
   fmap f (Last t) = Last (fmap f t)
 
 instance Extend Future where
-  extend g (Last t)  = Last (extendTree g t Last)
-  extend g (t :< ts) = extendTree g t (:< ts) :< extend g ts
+  extended = extend
 
 instance Comonad Future where
+  extend g (Last t)  = Last (extendTree g t Last)
+  extend g (t :< ts) = extendTree g t (:< ts) :< extend g ts
   extract = head
 
 extendTree :: (Future a -> b) -> Complete a -> (Complete a -> Future a) -> Complete b
@@ -141,6 +144,9 @@ instance Apply Future where
   Tip f :< fs          <.> Tip a :< as          = f a <| (fs             <.> as            )
   Tip f :< fs          <.> Bin _ a la ra :< as  = f a <| (fs             <.> la :< ra :< as)
   Tip f :< fs          <.> Last (Bin _ a la ra) = f a <| (fs             <.> la :< Last ra )
+
+instance ComonadApply Future where
+  (<@>) = (<.>)
 
 instance Applicative Future where
   pure = repeat
@@ -170,10 +176,10 @@ instance Traversable1 Future where
   traverse1 f (t :< ts) = (:<) <$> traverse1 f t <.> traverse1 f ts
   traverse1 f (Last t) = Last <$> traverse1 f t
 
-repeat :: a -> Future a 
-repeat a0 = go a0 (Tip a0) 
-    where 
-      go :: a -> Complete a -> Future a 
+repeat :: a -> Future a
+repeat a0 = go a0 (Tip a0)
+    where
+      go :: a -> Complete a -> Future a
       go a as | ass <- bin a as as = as :< go a ass
 {-# INLINE repeat #-}
 
@@ -182,20 +188,20 @@ replicate :: Int -> a -> Future a
 replicate n a
   | n <= 0    = error "replicate: non-positive argument"
   | otherwise = go 1 n a (Tip a) (\ _ r -> r)
-  where 
-  -- invariants: 
+  where
+  -- invariants:
   -- tb is a complete tree of i nodes all equal to b
   -- 1 <= i = 2^m-1 <= j
   -- k accepts r such that 0 <= r < i
   go :: Int -> Int -> b -> Complete b -> (Int -> Future b -> r) -> r
-  go !i !j b tb k 
+  go !i !j b tb k
     | j >= i2p1 = go i2p1 j b (Bin i2p1 b tb tb) k'
     | j >= i2   = k (j - i2) (tb :< Last tb)
     | otherwise = k (j - i) (Last tb)
-    where 
+    where
       i2 = i * 2
       i2p1 = i2 + 1
-      k' r xs 
+      k' r xs
         | r >= i2   = k (r - i2) (tb :< tb :< xs)
         | r >= i    = k (r - i) (tb :< xs)
         | otherwise = k r xs
@@ -203,7 +209,7 @@ replicate n a
 
 mapWithIndex :: (Int -> a -> b) -> Future a -> Future b
 mapWithIndex f0 as0 = spine f0 0 as0
-  where 
+  where
     spine f m (Last as) = Last (tree f m as)
     spine f m (a :< as) = tree f m a :< spine f (m + weight a) as
     tree f m (Tip a) = Tip (f m a)
@@ -218,7 +224,7 @@ from a = mapWithIndex ((+) . fromIntegral) (pure a)
 {-# INLINE from #-}
 
 -- | /O(1)/
-singleton :: a -> Future a 
+singleton :: a -> Future a
 singleton a = Last (Tip a)
 {-# INLINE singleton #-}
 
@@ -229,22 +235,22 @@ length (t :< ts) = weight t + length ts
 
 -- | /O(1)/ cons
 (<|) :: a -> Future a -> Future a
-a <| (l :< Last r)  
+a <| (l :< Last r)
   | weight l == weight r = Last (bin a l r)
-a <| (l :< r :< as) 
+a <| (l :< r :< as)
   | weight l == weight r = bin a l r :< as
 a <| as = Tip a :< as
 {-# INLINE (<|) #-}
 
 
 cons :: a -> Future a -> Future a
-cons = (<|)  
+cons = (<|)
 {-# INLINE cons #-}
 
 -- | /O(1)/
 head :: Future a -> a
 head (a :< _) = extract a
-head (Last a) = extract a 
+head (Last a) = extract a
 {-# INLINE head #-}
 
 -- | /O(1)/.
@@ -276,17 +282,17 @@ uncons (Bin _ a l r :< as)  = (a, Just (l :< r :< as))
 
 -- | /O(log n)/.
 index :: Int -> Future a -> a
-index i (Last t) 
+index i (Last t)
   | i < weight t = indexComplete i t
   | otherwise    = error "index: out of range"
-index i (t :< ts) 
+index i (t :< ts)
   | i < w     = indexComplete i t
   | otherwise = index (i - w) ts
   where w = weight t
 
 indexComplete :: Int -> Complete a -> a
 indexComplete 0 (Tip a) = a
-indexComplete i (Bin w a l r) 
+indexComplete i (Bin w a l r)
   | i == 0    = a
   | i <= w'   = indexComplete (i-1) l
   | otherwise = indexComplete (i-1-w') r
@@ -301,24 +307,24 @@ drop i (t :< ts) = case compare i w of
   EQ -> Just ts
   GT -> drop (i - w) ts
   where w = weight t
-drop i (Last t) 
+drop i (Last t)
   | i < w     = Just (dropComplete i t Last)
   | otherwise = Nothing
   where w = weight t
 
-dropComplete :: Int -> Complete a -> (Complete a -> Future a) -> Future a 
+dropComplete :: Int -> Complete a -> (Complete a -> Future a) -> Future a
 dropComplete 0 t f             = f t
 dropComplete 1 (Bin _ _ l r) f = l :< f r
 dropComplete i (Bin w _ l r) f = case compare (i - 1) w' of
   LT -> dropComplete (i-1) l (:< f r)
   EQ -> f r
-  GT -> dropComplete (i-1-w') r f 
+  GT -> dropComplete (i-1-w') r f
   where w' = div w 2
 dropComplete _ _ _ = error "drop: index out of range"
 
 -- /O(n)/.
 dropWhile :: (a -> Bool) -> Future a -> Maybe (Future a)
-dropWhile p as 
+dropWhile p as
   | p (head as) = tail as >>= dropWhile p
   | otherwise = Just as
 
@@ -336,7 +342,7 @@ break p = span (not . p)
 -- /(O(n), O(log n))/ split at _some_ edge where function goes from False to True.
 -- best used with a monotonic function
 split :: (a -> Bool) -> Future a -> ([a], Maybe (Future a))
-split p l@(Last a) 
+split p l@(Last a)
   | p (extract a)  = ([], Just l)
   | otherwise      = splitComplete p a Last
 split p (a :< as)
@@ -361,7 +367,7 @@ splitW :: (Future a -> Bool) -> Future a -> ([a], Maybe (Future a))
 splitW p l@(Last a)
   | p l       = ([], Just l)
   | otherwise = splitCompleteW p a Last
-splitW p (a :< as) 
+splitW p (a :< as)
   | p as                    = splitCompleteW p a (:< as)
   | (ts, fs) <- splitW p as = (foldr (:) ts a, fs)
 
@@ -381,7 +387,7 @@ fromList (x:xs) = go x xs
   where go a [] = singleton a
         go a (b:bs) = a <| go b bs
 
-toFuture :: [a] -> Maybe (Future a) 
+toFuture :: [a] -> Maybe (Future a)
 toFuture [] = Nothing
 toFuture xs = Just (fromList xs)
 
@@ -399,10 +405,10 @@ insertBy cmp a as = case split (\b -> cmp a b <= EQ) as of
 
 -- /O(log n)/ Change the value of the nth entry in the future
 adjust :: Int -> (a -> a) -> Future a -> Future a
-adjust !n f d@(Last a) 
+adjust !n f d@(Last a)
   | n < weight a = Last (adjustComplete n f a)
   | otherwise = d
-adjust !n f (a :< as) 
+adjust !n f (a :< as)
   | n < w = adjustComplete n f a :< as
   | otherwise = a :< adjust (n - w) f as
   where w = weight a
@@ -410,7 +416,7 @@ adjust !n f (a :< as)
 adjustComplete :: Int -> (a -> a) -> Complete a -> Complete a
 adjustComplete 0 f (Tip a) = Tip (f a)
 adjustComplete _ _ t@Tip{} = t
-adjustComplete n f (Bin m a l r) 
+adjustComplete n f (Bin m a l r)
   | n == 0 = Bin m (f a) l r
   | n < w = Bin m a (adjustComplete (n - 1) f l) r
   | otherwise = Bin m a l (adjustComplete (n - 1 - w) f r)

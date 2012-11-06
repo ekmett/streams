@@ -55,6 +55,7 @@ import Control.Comonad
 #ifdef LANGUAGE_DeriveDataTypeable
 import Data.Data
 #endif
+import Data.Functor.Extend
 import Data.Functor.Apply
 -- import Data.Monoid
 import Data.Semigroup
@@ -102,9 +103,10 @@ uncons :: Zipper a -> (a, Zipper a)
 uncons (n :~ f) = (f n, n + 1 :~ f)
 
 instance Extend Zipper where
-  duplicate (n :~ f) = n :~ (:~ f)
+  duplicated (n :~ f) = n :~ (:~ f)
 
 instance Comonad Zipper where
+  duplicate (n :~ f) = n :~ (:~ f)
   extract (n :~ f) = f n
 
 instance Apply Zipper where
@@ -113,6 +115,12 @@ instance Apply Zipper where
     = nf :~ \n -> f n (a (n + dn))
   as        <.  _         = as
   _          .> bs        = bs
+
+instance ComonadApply Zipper where
+  (<@>) = (<.>)
+  (<@) = (<.)
+  (@>) = (.>)
+
 
 instance Applicative Zipper where
   pure = repeat

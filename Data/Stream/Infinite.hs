@@ -80,6 +80,7 @@ import Control.Comonad
 import Data.Char (isSpace)
 import Data.Data
 import Data.Functor.Apply
+import Data.Functor.Extend
 import Data.Semigroup
 import Data.Foldable
 import Data.Traversable
@@ -124,16 +125,23 @@ tails :: Stream a -> Stream (Stream a)
 tails w = w :> tails (tail w)
 
 instance Extend Stream where
-  duplicate = tails
-  extend f w = f w :> extend f (tail w)
+  duplicated = tails
+  extended f w = f w :> extended f (tail w)
 
 instance Comonad Stream where
+  duplicate = tails
+  extend f w = f w :> extend f (tail w)
   extract = head
 
 instance Apply Stream where
   (f :> fs) <.> (a :> as) = f a :> (fs <.> as)
   as        <.  _         = as
   _          .> bs        = bs
+
+instance ComonadApply Stream where
+  (f :> fs) <@> (a :> as) = f a :> (fs <@> as)
+  as        <@  _         = as
+  _          @> bs        = bs
 
 -- | 'repeat' @x@ returns a constant stream, where all elements are
 -- equal to @x@.

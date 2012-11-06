@@ -11,7 +11,7 @@
 --
 ----------------------------------------------------------------------------
 
-module Data.Stream.Future 
+module Data.Stream.Future
   ( Future(..)
   , cons, (<|)
   , head
@@ -27,6 +27,7 @@ import Control.Applicative
 import Control.Comonad
 import Data.Foldable
 import Data.Functor.Alt
+import Data.Functor.Extend
 import Data.Traversable
 import Data.Semigroup hiding (Last)
 import Data.Semigroup.Foldable
@@ -37,7 +38,7 @@ import Data.Data
 
 infixr 5 :<, <|
 
-data Future a = Last a | a :< Future a deriving 
+data Future a = Last a | a :< Future a deriving
   ( Eq, Ord, Show, Read
 #ifdef LANGUAGE_DeriveDataTypeable
   , Data, Typeable
@@ -48,7 +49,7 @@ data Future a = Last a | a :< Future a deriving
 (<|) = (:<)
 {-# INLINE (<|) #-}
 
-cons :: a -> Future a -> Future a 
+cons :: a -> Future a -> Future a
 cons = (:<)
 {-# INLINE cons #-}
 
@@ -91,10 +92,10 @@ instance Functor Future where
   fmap = map
   b <$ (_ :< as) = b :< (b <$ as)
   b <$ _         = Last b
-  
-instance Foldable Future where 
+
+instance Foldable Future where
   foldMap = foldMapDefault
-  
+
 instance Traversable Future where
   traverse f (Last a)  = Last <$> f a
   traverse f (a :< as) = (:<) <$> f a <*> traverse f as
@@ -106,12 +107,13 @@ instance Traversable1 Future where
   traverse1 f (a :< as) = (:<) <$> f a <.> traverse1 f as
 
 instance Extend Future where
-  duplicate = tails
-  extend f w@(_ :< as) = f w :< extend f as
-  extend f w@(Last _)  = Last (f w)
+  extended = extend
 
 instance Comonad Future where
   extract = head
+  duplicate = tails
+  extend f w@(_ :< as) = f w :< extend f as
+  extend f w@(Last _)  = Last (f w)
 
 instance Apply Future where
   Last f    <.> Last a    = Last (f a)
@@ -126,14 +128,17 @@ instance Apply Future where
   _          .> Last b   = Last b
   Last _     .> (b :< _) = Last b
   (_ :< as)  .> (b :< bs) = b :< (as .> bs)
-  
+
+instance ComonadApply Future where
+  (<@>) = (<.>)
+
 instance Alt Future where
   Last a    <!> bs = a :< bs
   (a :< as) <!> bs = a :< (as <!> bs)
 
 instance Semigroup (Future a) where
   (<>) = (<!>)
-  
+
 instance Applicative Future where
   pure = Last
   (<*>) = (<.>)
