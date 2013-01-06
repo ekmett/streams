@@ -1,6 +1,6 @@
 name:          streams
 category:      Control, Comonads
-version:       3.0.1
+version:       3.0.1.1
 license:       BSD3
 cabal-version: >= 1.6
 license-file:  LICENSE
@@ -15,7 +15,13 @@ copyright:     Copyright 2011-2013 Edward Kmett
                Copyright 2008 Iavor S. Diatchki
 synopsis:      Various Haskell 2010 stream comonads
 build-type:    Simple
-extra-source-files: README .travis.yml
+extra-source-files:
+  CHANGELOG.markdown
+  README
+  .ghci
+  .gitignore
+  .travis.yml
+  .vim.custom
 description:
   Various Haskell 2010 stream comonads.
   * "Data.Stream.Future" provides a coinductive anti-causal stream, or non-empty 'ZipList'. The comonad provides access to only the
