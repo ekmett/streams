@@ -34,8 +34,7 @@ description:
   * "Data.Stream.Infinite" provides a coinductive infinite anti-causal stream. The 'Comonad' provides access to the tail of the
     stream and the 'Applicative' zips streams together. Unlike 'Future', infinite stream form a 'Monad'. The monad diagonalizes
     the 'Stream', which is consistent with the behavior of the 'Applicative', and the view of a 'Stream' as a isomorphic to the reader
-    monad from the natural numbers. Being infinite in length, there is no 'Alternative' instance, but instead the 'FunctorAlt'
-    instance provides access to the 'Semigroup' of interleaving streams.
+    monad from the natural numbers. Being infinite in length, there is no 'Alternative' instance.
   .
   > data Stream a = a :< Stream a
   .

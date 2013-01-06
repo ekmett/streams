@@ -185,9 +185,6 @@ instance Monad Stream where
 interleave :: Stream a -> Stream a -> Stream a
 interleave ~(x :> xs) ys = x :> interleave ys xs
 
-instance Semigroup (Stream a) where
-  (<>) = interleave
-
 -- | The 'inits' function takes a stream @xs@ and returns all the
 -- finite prefixes of @xs@.
 --
