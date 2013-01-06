@@ -34,7 +34,7 @@ Data.Stream.Infinite.Functional.Future           data Future a = Future !(Intege
 Data.Stream.Infinite.Functional.Causal           data Causal a = Causal !(Integer -> a) !Integer -- decrement only
 
 Data.Sequence.Future        data Future a = Future !(Int# -> a)      Int# Int#
-Data.Sequence.Causal        data Causal a = Causal !(Int# -> a) Int# Int#     
+Data.Sequence.Causal        data Causal a = Causal !(Int# -> a) Int# Int#
 Data.Sequence.Zipper        data Zipper a = Zipper !(Int# -> a) Int# Int# Int#
 
 Data.Tensors          data Tensors f a = Last a | a :-   Tensors f (f a)
