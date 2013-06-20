@@ -1,3 +1,7 @@
+3.1.1
+-----
+* Marked modules appropriately Trustworthy
+
 3.0.1
 -----
 * Removed intra-package dependency bounds for my packages

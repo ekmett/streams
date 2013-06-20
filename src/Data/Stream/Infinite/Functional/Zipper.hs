@@ -1,4 +1,7 @@
 {-# LANGUAGE CPP, PatternGuards, BangPatterns #-}
+#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 702
+{-# LANGUAGE Trustworthy #-}
+#endif
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Zipper.Infinite.Functional.Zipper
