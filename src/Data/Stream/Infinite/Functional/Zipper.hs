@@ -220,9 +220,6 @@ isPrefixOf xs0 (n0 :~ f0) = go xs0 n0 f0 where
 
 -- | @xs !! n@ returns the element of the stream @xs@ at index
 -- @n@. Note that the head of the stream has index 0.
---
--- /Beware/: passing a negative integer as the first argument will cause
--- an error.
 (!!) :: Zipper a -> Integer -> a
 (!!) (n :~ f) m = f (n + m)
 

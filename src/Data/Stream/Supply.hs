@@ -60,7 +60,7 @@ import qualified Data.Stream.Infinite.Skew as Skew
 import Data.Data
 #endif
 
-#ifdef __GLASGOW_HASKELL__ >= 608 
+#if __GLASGOW_HASKELL__ >= 608 
 import GHC.IO(unsafeDupableInterleaveIO)
 #else
 unsafeDupableInterleaveIO :: IO a -> IO a
