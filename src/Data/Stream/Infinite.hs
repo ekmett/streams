@@ -51,7 +51,7 @@ module Data.Stream.Infinite (
    , groupBy     -- :: (a -> a -> Bool) -> Stream a -> Stream (NonEmpty a)
    -- * Sublist predicates
    , isPrefixOf  -- :: [a] -> Stream a -> Bool
-   -- * Indexing streams 
+   -- * Indexing streams
    , (!!)        -- :: Int -> Stream a -> a
    , elemIndex   -- :: Eq a => a -> Stream a -> Int
    , elemIndices -- :: Eq a => a -> Stream a -> Stream Int
@@ -70,7 +70,7 @@ module Data.Stream.Infinite (
    , fromList    -- :: [a] -> Stream a
    ) where
 
-import Prelude hiding 
+import Prelude hiding
   ( head, tail, map, scanr, scanr1, scanl, scanl1
   , iterate, take, drop, takeWhile
   , dropWhile, repeat, cycle, filter
@@ -81,6 +81,7 @@ import Prelude hiding
 
 import Control.Applicative
 import Control.Comonad
+import Control.Monad (liftM2)
 import Data.Char (isSpace)
 import Data.Data
 import Data.Functor.Apply
@@ -92,8 +93,9 @@ import Data.Distributive
 import Data.Semigroup.Traversable
 import Data.Semigroup.Foldable
 import Data.List.NonEmpty (NonEmpty(..))
+import Test.QuickCheck (Arbitrary(arbitrary))
 
-data Stream a = a :> Stream a deriving 
+data Stream a = a :> Stream a deriving
   ( Show
 #ifdef LANGUAGE_DeriveDataTypeable
   , Data, Typeable
@@ -268,8 +270,8 @@ drop n xs
   | n > 0 = drop (n - 1) (tail xs)
   | otherwise = error "Stream.drop: negative argument"
 
--- | @'splitAt' n xs@ returns a pair consisting of the prefix of 
--- @xs@ of length @n@ and the remaining stream immediately following 
+-- | @'splitAt' n xs@ returns a pair consisting of the prefix of
+-- @xs@ of length @n@ and the remaining stream immediately following
 -- this prefix.
 --
 -- /Beware/: passing a negative integer as the first argument will
@@ -283,7 +285,7 @@ splitAt n xs
 -- | @'takeWhile' p xs@ returns the longest prefix of the stream
 -- @xs@ for which the predicate @p@ holds.
 takeWhile :: (a -> Bool) -> Stream a -> [a]
-takeWhile p (x :> xs) 
+takeWhile p (x :> xs)
   | p x = x : takeWhile p xs
   | otherwise = []
 
@@ -313,7 +315,7 @@ break p = span (not . p)
 -- /Beware/: this function may diverge if there is no element of
 -- @xs@ that satisfies @p@, e.g.  @filter odd (repeat 0)@ will loop.
 filter :: (a -> Bool) -> Stream a -> Stream a
-filter p ~(x :> xs) 
+filter p ~(x :> xs)
   | p x       = x :> filter p xs
   | otherwise = filter p xs
 
@@ -341,8 +343,8 @@ group :: Eq a => Stream a -> Stream (NonEmpty a)
 group = groupBy (==)
 
 groupBy :: (a -> a -> Bool) -> Stream a -> Stream (NonEmpty a)
-groupBy eq ~(x :> ys) 
-  | (xs, zs) <- span (eq x) ys 
+groupBy eq ~(x :> ys)
+  | (xs, zs) <- span (eq x) ys
   = (x :| xs) :> groupBy eq zs
 
 -- | The 'isPrefix' function returns @True@ if the first argument is
@@ -388,7 +390,7 @@ elemIndices x = findIndices (x==)
 findIndex :: (a -> Bool) -> Stream a -> Int
 findIndex p = indexFrom 0
     where
-    indexFrom ix (x :> xs) 
+    indexFrom ix (x :> xs)
       | p x       = ix
       | otherwise = (indexFrom $! (ix + 1)) xs
 
@@ -400,8 +402,8 @@ findIndex p = indexFrom 0
 -- of any suffix of @xs@ fails to satisfy @p@.
 findIndices :: (a -> Bool) -> Stream a -> Stream Int
 findIndices p = indicesFrom 0 where
-  indicesFrom ix (x :> xs) 
-    | p x = ix :> ixs 
+  indicesFrom ix (x :> xs)
+    | p x = ix :> ixs
     | otherwise = ixs
     where ixs = (indicesFrom $! (ix+1)) xs
 
@@ -454,3 +456,6 @@ unlines ~(x :> xs) = foldr (:>) ('\n' :> unlines xs) x
 fromList :: [a] -> Stream a
 fromList (x:xs) = x :> fromList xs
 fromList []     = error "Stream.listToStream applied to finite list"
+
+instance Arbitrary a => Arbitrary (Stream a) where
+  arbitrary = liftM2 (:>) arbitrary arbitrary

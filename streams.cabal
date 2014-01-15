@@ -71,6 +71,7 @@ library
     base          >= 4 && < 5,
     comonad       >= 3,
     distributive  >= 0.2.1,
+    QuickCheck    >= 2.6,
     semigroupoids >= 3,
     semigroups    >= 0.8.3.1
 
