@@ -21,7 +21,7 @@
 -- makes it easier to exploit parallelism.
 --
 -- The technique for generating new values is based on the paper
--- ''On Generating Unique Names'' by Lennart Augustsson, Mikael Rittri, 
+-- ''On Generating Unique Names'' by Lennart Augustsson, Mikael Rittri,
 -- and Dan Synek.
 ----------------------------------------------------------------------------
 module Data.Stream.Supply
@@ -67,7 +67,7 @@ unsafeDupableInterleaveIO :: IO a -> IO a
 unsafeDupableInterleaveIO = unsafeInterleaveIO
 #endif
 
-data Supply a = Supply a (Supply a) (Supply a) deriving 
+data Supply a = Supply a (Supply a) (Supply a) deriving
   ( Show, Read, Eq, Ord
 #ifdef LANGUAGE_DeriveDataTypeable
   , Data, Typeable
@@ -109,7 +109,7 @@ instance Traversable Supply where
 
 instance Traversable1 Supply where
   traverse1 f (Supply a l r) = Supply <$> f a <.> traverse1 f l <.> traverse1 f r
-  
+
 leftSupply :: Supply a -> Supply a
 leftSupply (Supply _ l _) = l
 
@@ -120,8 +120,8 @@ rightSupply (Supply _ _ r) = r
 newSupply :: (a -> a) -> a -> IO (Supply a)
 newSupply f x = gen =<< newIORef x
   where gen r = unsafeInterleaveIO $
-          Supply <$> unsafeInterleaveIO (atomicModifyIORef r update) 
-                 <*> gen r 
+          Supply <$> unsafeInterleaveIO (atomicModifyIORef r update)
+                 <*> gen r
                  <*> gen r
         update a = b `seq` (b, a) where b = f a
 {-# INLINE newSupply #-}

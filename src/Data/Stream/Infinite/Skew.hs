@@ -14,12 +14,12 @@
 -- Portability :  portable
 --
 -- Anticausal streams implemented as non-empty skew binary random access lists
--- 
+--
 -- The Applicative zips streams, the monad diagonalizes
 ------------------------------------------------------------------------------
 
 
-module Data.Stream.Infinite.Skew 
+module Data.Stream.Infinite.Skew
     ( Stream
     , (<|)      -- O(1)
     , (!!)
@@ -34,7 +34,7 @@ module Data.Stream.Infinite.Skew
     , break
     , split
     , splitW
-    , repeat   
+    , repeat
     , insert    -- O(n)
     , insertBy
     , adjust    -- O(log n)
@@ -44,7 +44,7 @@ module Data.Stream.Infinite.Skew
     , indexed
     , interleave
     , tabulate
-    ) where 
+    ) where
 
 import Control.Arrow (first)
 import Control.Applicative hiding (empty)
@@ -61,7 +61,7 @@ import Prelude hiding (null, head, tail, drop, dropWhile, length, foldr, last, s
 
 infixr 5 :<, <|
 
-data Complete a 
+data Complete a
     = Tip a
     | Bin !Integer a !(Complete a) !(Complete a)
     deriving Show
@@ -81,7 +81,7 @@ instance Comonad Complete where
   extract (Bin _ a _ _) = a
 
 instance Foldable Complete where
-  foldMap f (Tip a) = f a 
+  foldMap f (Tip a) = f a
   foldMap f (Bin _ a l r) = f a `mappend` foldMap f l `mappend` foldMap f r
   foldr f z (Tip a) = f a z
   foldr f z (Bin _ a l r) = f a (foldr f (foldr f z r) l)
@@ -91,14 +91,14 @@ instance Foldable1 Complete where
   foldMap1 f (Bin _ a l r) = f a <> foldMap1 f l <> foldMap1 f r
 
 instance Traversable Complete where
-  traverse f (Tip a) = Tip <$> f a 
+  traverse f (Tip a) = Tip <$> f a
   traverse f (Bin n a l r) = Bin n <$> f a <*> traverse f l <*> traverse f r
 
 instance Traversable1 Complete where
-  traverse1 f (Tip a) = Tip <$> f a 
+  traverse1 f (Tip a) = Tip <$> f a
   traverse1 f (Bin n a l r) = Bin n <$> f a <.> traverse1 f l <.> traverse1 f r
 
-bin :: a -> Complete a -> Complete a -> Complete a 
+bin :: a -> Complete a -> Complete a -> Complete a
 bin a l r = Bin (1 + weight l + weight r) a l r
 {-# INLINE bin #-}
 
@@ -108,12 +108,12 @@ weight (Bin w _ _ _) = w
 {-# INLINE weight #-}
 
 -- A future is a non-empty skew binary random access list of nodes.
--- The last node, however, is allowed to contain fewer values. 
+-- The last node, however, is allowed to contain fewer values.
 data Stream a = !(Complete a) :< Stream a
 --  deriving Show
 
 instance Show a => Show (Stream a) where
-  showsPrec d as = showParen (d >= 10) $ 
+  showsPrec d as = showParen (d >= 10) $
     showString "fromList " . showsPrec 11 (toList as)
 
 instance Functor Stream where
@@ -147,7 +147,7 @@ instance Applicative Stream where
   ( *>) = ( .>)
 
 instance Alt Stream where
-  as <!> bs = tabulate $ \i -> case quotRem i 2 of 
+  as <!> bs = tabulate $ \i -> case quotRem i 2 of
     (q,0) -> as !! q
     (q,_) -> bs !! q
 
@@ -179,17 +179,17 @@ instance Monad Stream where
   as >>= f = mapWithIndex (\i a -> f a !! i) as
 
 interleave :: Stream a -> Stream a -> Stream a
-interleave = (<!>) 
-      
-repeat :: a -> Stream a 
-repeat b = go b (Tip b) 
-    where 
-      go :: a -> Complete a -> Stream a 
+interleave = (<!>)
+
+repeat :: a -> Stream a
+repeat b = go b (Tip b)
+    where
+      go :: a -> Complete a -> Stream a
       go a as | ass <- bin a as as = as :< go a ass
 
 mapWithIndex :: (Integer -> a -> b) -> Stream a -> Stream b
 mapWithIndex f0 as0 = spine f0 0 as0
-  where 
+  where
     spine f m (a :< as) = tree f m a :< spine f (m + weight a) as
     tree f m (Tip a) = Tip (f m a)
     tree f m (Bin n a l r) = Bin n (f m a) (tree f (m + 1) l) (tree f (m + 1 + weight l) r)
@@ -206,7 +206,7 @@ from a = mapWithIndex ((+) . fromIntegral) (pure a)
 
 -- | /O(1)/ cons
 (<|) :: a -> Stream a -> Stream a
-a <| (l :< r :< as) 
+a <| (l :< r :< as)
   | weight l == weight r = bin a l r :< as
 a <| as = Tip a :< as
 {-# INLINE (<|) #-}
@@ -234,7 +234,7 @@ uncons (Bin _ a l r :< as)  = (a, l :< r :< as)
 
 -- | /O(log n)/.
 index :: Integer -> Stream a -> a
-index i (t :< ts) 
+index i (t :< ts)
   | i < 0     = error "index: negative index"
   | i < w     = indexComplete i t
   | otherwise = index (i - w) ts
@@ -243,7 +243,7 @@ index i (t :< ts)
 indexComplete :: Integer -> Complete a -> a
 indexComplete 0 (Tip a) = a
 indexComplete 0 (Bin _ a _ _) = a
-indexComplete i (Bin w _ l r) 
+indexComplete i (Bin w _ l r)
   | i <= w'   = indexComplete (i-1) l
   | otherwise = indexComplete (i-1-w') r
   where w' = div w 2
@@ -251,7 +251,7 @@ indexComplete _ _ = error "indexComplete"
 
 -- | /O(log n)/.
 (!!) :: Stream a -> Integer -> a
-(!!) = flip index 
+(!!) = flip index
 
 -- | /O(log n)/.
 drop :: Integer -> Stream a -> Stream a
@@ -262,7 +262,7 @@ drop i (t :< ts) = case compare i w of
   GT -> drop (i - w) ts
   where w = weight t
 
-dropComplete :: Integer -> Complete a -> (Complete a -> Stream a) -> Stream a 
+dropComplete :: Integer -> Complete a -> (Complete a -> Stream a) -> Stream a
 dropComplete 0 t f             = f t
 dropComplete 1 (Bin _ _ l r) f = l :< f r
 dropComplete i (Bin w _ l r) f = case compare (i - 1) w' of
@@ -274,7 +274,7 @@ dropComplete _ _ _ = error "dropComplete"
 
 -- /O(n)/.
 dropWhile :: (a -> Bool) -> Stream a -> Stream a
-dropWhile p as 
+dropWhile p as
   | p (head as) = dropWhile p (tail as)
   | otherwise   = as
 
@@ -308,7 +308,7 @@ splitComplete p t@(Bin _ a l r) f
 --
 -- > splitW p xs = (map extract &&& fmap (fmap extract)) . split p . duplicate
 splitW :: (Stream a -> Bool) -> Stream a -> ([a], Stream a)
-splitW p (a :< as) 
+splitW p (a :< as)
   | p as                    = splitCompleteW p a (:< as)
   | (ts, fs) <- splitW p as = (foldr (:) ts a, fs)
 
@@ -333,7 +333,7 @@ insertBy cmp a as | (ts, as') <- split (\b -> cmp a b <= EQ) as = foldr (<|) (a 
 
 -- /O(log n)/ Change the value of the nth entry in the future
 adjust :: Integer -> (a -> a) -> Stream a -> Stream a
-adjust !n f (a :< as) 
+adjust !n f (a :< as)
   | n < w = adjustComplete n f a :< as
   | otherwise = a :< adjust (n - w) f as
   where w = weight a
@@ -341,7 +341,7 @@ adjust !n f (a :< as)
 adjustComplete :: Integer -> (a -> a) -> Complete a -> Complete a
 adjustComplete 0 f (Tip a) = Tip (f a)
 adjustComplete _ _ t@Tip{} = t
-adjustComplete n f (Bin m a l r) 
+adjustComplete n f (Bin m a l r)
   | n == 0 = Bin m (f a) l r
   | n < w = Bin m a (adjustComplete (n - 1) f l) r
   | otherwise = Bin m a l (adjustComplete (n - 1 - w) f r)

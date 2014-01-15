@@ -18,7 +18,7 @@ module Data.Stream.Infinite.Functional.Zipper (
    -- * The type of streams
      Zipper(..)
    , tail   -- :: Zipper a -> Zipper a
-   , untail -- :: Zipper a -> Zipper a 
+   , untail -- :: Zipper a -> Zipper a
    , intersperse -- :: a -> Zipper a -> Zipper a
    , interleave  -- :: Zipper a -> Zipper a -> Zipper a
    , transpose   -- :: Zipper (Zipper a) -> Zipper (Zipper a)
@@ -43,7 +43,7 @@ module Data.Stream.Infinite.Functional.Zipper (
    , zipWith
    ) where
 
-import Prelude hiding 
+import Prelude hiding
   ( head, tail, map, scanr, scanr1, scanl, scanl1
   , iterate, take, drop, takeWhile
   , dropWhile, repeat, cycle, filter
@@ -74,7 +74,7 @@ data Zipper a = !Integer :~ !(Integer -> a)
 #endif
 
 toSequence :: (Integer -> a) -> Zipper a
-toSequence = (0 :~) 
+toSequence = (0 :~)
 
 infixr 0 :~
 
@@ -113,7 +113,7 @@ instance Comonad Zipper where
   extract (n :~ f) = f n
 
 instance Apply Zipper where
-  (nf :~ f) <.> (na :~ a) 
+  (nf :~ f) <.> (na :~ a)
     | dn <- na - nf
     = nf :~ \n -> f n (a (n + dn))
   as        <.  _         = as
@@ -143,11 +143,11 @@ repeat a = 0 :~ const a
 -- from each list.
 --
 -- > [x1,x2,...] `interleave` [y1,y2,...] == [x1,y1,x2,y2,...]
--- > interleave = (<>) 
+-- > interleave = (<>)
 interleave :: Zipper a -> Zipper a -> Zipper a
-interleave = (<>) 
+interleave = (<>)
 instance Semigroup (Zipper a) where
-  (n :~ a) <> (m :~ b) = 0 :~ \p -> case quotRem p 2 of 
+  (n :~ a) <> (m :~ b) = 0 :~ \p -> case quotRem p 2 of
     (q, 0) -> a (n + q)
     (q, _) -> b (m + q)
 
@@ -167,14 +167,14 @@ take n0 (m0 :~ f0)
   where
     go 0 !_ !_ = []
     go n  m  f = f m : go (n - 1) (m + 1) f
-  
+
 -- | @'drop' n xs@ drops the first @n@ elements off the front of
 -- the sequence @xs@.
 drop :: Integer -> Zipper a -> Zipper a
 drop m (n :~ f) = m + n :~ f
 
--- | @'splitAt' n xs@ returns a pair consisting of the prefix of 
--- @xs@ of length @n@ and the remaining stream immediately following 
+-- | @'splitAt' n xs@ returns a pair consisting of the prefix of
+-- @xs@ of length @n@ and the remaining stream immediately following
 -- this prefix.
 --
 -- /Beware/: passing a negative integer as the first argument will
@@ -185,8 +185,8 @@ splitAt n xs = (take n xs, drop n xs)
 -- | @'takeWhile' p xs@ returns the longest prefix of the stream
 -- @xs@ for which the predicate @p@ holds.
 takeWhile :: (a -> Bool) -> Zipper a -> [a]
-takeWhile p0 (n0 :~ f0) = go p0 n0 f0 where 
-  go !p !n !f 
+takeWhile p0 (n0 :~ f0) = go p0 n0 f0 where
+  go !p !n !f
     | x <- f n, p x = x : go p (n + 1) f
     | otherwise = []
 
@@ -201,7 +201,7 @@ dropWhile p xs@(_ :~ f) = findIndex' p xs :~ f
 -- | @'span' p xs@ returns the longest prefix of @xs@ that satisfies
 -- @p@, together with the remainder of the stream.
 span :: (a -> Bool) -> Zipper a -> ([a], Zipper a)
-span p0 (n0 :~ f0) 
+span p0 (n0 :~ f0)
   | (ts, n') <- go p0 n0 f0 = (ts, n' :~ f0) where
   go !p !n !f
     | x <- f n, p x, (ts, fs) <- go p (n + 1) f = (x:ts, fs)
@@ -230,14 +230,14 @@ isPrefixOf xs0 (n0 :~ f0) = go xs0 n0 f0 where
 -- @xs@ satisfy @p@.
 findIndex :: (a -> Bool) -> Zipper a -> Integer
 findIndex p0 (n0 :~ f0) = go p0 n0 f0 - n0 where
-  go !p !n !f 
+  go !p !n !f
     | x <- f n, p x = n
     | otherwise = go p (n + 1) f
 
--- | Internal helper, used to find an index in the 
+-- | Internal helper, used to find an index in the
 findIndex' :: (a -> Bool) -> Zipper a -> Integer
 findIndex' p0 (n0 :~ f0) = go p0 n0 f0 where
-  go !p !n !f 
+  go !p !n !f
     | x <- f n, p x = n
     | otherwise = go p (n + 1) f
 
@@ -290,8 +290,8 @@ unzip xs = (fst <$> xs, snd <$> xs)
 -- of any suffix of @xs@ fails to satisfy @p@.
 findIndices :: (a -> Bool) -> Zipper a -> Zipper Int
 findIndices p = indicesFrom 0 where
-  indicesFrom ix (x :< xs) 
-    | p x = ix :< ixs 
+  indicesFrom ix (x :< xs)
+    | p x = ix :< ixs
     | otherwise = ixs
     where ixs = (indicesFrom $! (ix+1)) xs
 
