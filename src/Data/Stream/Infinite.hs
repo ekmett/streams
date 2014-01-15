@@ -81,6 +81,7 @@ import Prelude hiding
 
 import Control.Applicative
 import Control.Comonad
+import Control.Monad (liftM2)
 import Data.Char (isSpace)
 import Data.Data
 import Data.Functor.Apply
@@ -92,6 +93,7 @@ import Data.Distributive
 import Data.Semigroup.Traversable
 import Data.Semigroup.Foldable
 import Data.List.NonEmpty (NonEmpty(..))
+import Test.QuickCheck (Arbitrary(arbitrary))
 
 data Stream a = a :> Stream a deriving
   ( Show
@@ -454,3 +456,6 @@ unlines ~(x :> xs) = foldr (:>) ('\n' :> unlines xs) x
 fromList :: [a] -> Stream a
 fromList (x:xs) = x :> fromList xs
 fromList []     = error "Stream.listToStream applied to finite list"
+
+instance Arbitrary a => Arbitrary (Stream a) where
+  arbitrary = liftM2 (:>) arbitrary arbitrary
