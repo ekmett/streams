@@ -118,7 +118,10 @@ instance Distributive Stream where
 instance Representable Stream where
   type Rep Stream = Int
   tabulate f      = unfold (\i -> (,) (f i) $! (i + 1)) 0
-  index           = (!!)
+  index (x :> xs) n
+    | n == 0    = x
+    | n > 0     = xs !! (n - 1)
+    | otherwise = error "Stream.!! negative argument"
 
 -- | Extract the first element of the sequence.
 head :: Stream a -> a
@@ -366,10 +369,7 @@ isPrefixOf (y:ys) (x :> xs)
 -- /Beware/: passing a negative integer as the first argument will cause
 -- an error.
 (!!) :: Stream a -> Int -> a
-(!!) (x :> xs) n
-  | n == 0    = x
-  | n > 0     = xs !! (n - 1)
-  | otherwise = error "Stream.!! negative argument"
+(!!) = index
 
 -- | The 'elemIndex' function returns the index of the first element
 -- in the given stream which is equal (by '==') to the query element,

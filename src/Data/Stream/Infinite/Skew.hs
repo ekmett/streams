@@ -28,7 +28,6 @@ module Data.Stream.Infinite.Skew
     , tail      -- O(1)
     , tails
     , uncons    -- O(1)
-    , index     -- O(log n)
     , drop      -- O(log n)
     , dropWhile -- O(n)
     , span
@@ -44,7 +43,6 @@ module Data.Stream.Infinite.Skew
     , from
     , indexed
     , interleave
-    , tabulate
     ) where
 
 import Control.Arrow (first)
@@ -53,8 +51,7 @@ import Control.Comonad
 import Data.Distributive
 import Data.Functor.Alt
 import Data.Functor.Extend
-import Data.Functor.Rep (Representable)
-import qualified Data.Functor.Rep as Representable
+import Data.Functor.Rep
 import Data.Foldable hiding (toList)
 import Data.Traversable
 import Data.Semigroup hiding (Last)
@@ -176,8 +173,12 @@ instance Distributive Stream where
 
 instance Representable Stream where
   type Rep Stream = Integer
-  tabulate        = tabulate
-  index           = (!!)
+  tabulate f      = mapWithIndex (const . f) (pure ())
+  index (t :< ts) i
+    | i < 0     = error "index: negative index"
+    | i < w     = indexComplete i t
+    | otherwise = index ts (i - w)
+    where w = weight t
 
 instance Semigroup (Stream a) where
   (<>) = (<!>)
@@ -201,10 +202,6 @@ mapWithIndex f0 as0 = spine f0 0 as0
     spine f m (a :< as) = tree f m a :< spine f (m + weight a) as
     tree f m (Tip a) = Tip (f m a)
     tree f m (Bin n a l r) = Bin n (f m a) (tree f (m + 1) l) (tree f (m + 1 + weight l) r)
-
-tabulate :: (Integer -> a) -> Stream a
-tabulate f = mapWithIndex (const . f) (pure ())
-
 
 indexed :: Stream a -> Stream (Integer, a)
 indexed = mapWithIndex (,)
@@ -240,14 +237,6 @@ uncons (Tip a       :< as)  = (a, as)
 uncons (Bin _ a l r :< as)  = (a, l :< r :< as)
 {-# INLINE uncons #-}
 
--- | /O(log n)/.
-index :: Integer -> Stream a -> a
-index i (t :< ts)
-  | i < 0     = error "index: negative index"
-  | i < w     = indexComplete i t
-  | otherwise = index (i - w) ts
-  where w = weight t
-
 indexComplete :: Integer -> Complete a -> a
 indexComplete 0 (Tip a) = a
 indexComplete 0 (Bin _ a _ _) = a
@@ -259,7 +248,7 @@ indexComplete _ _ = error "indexComplete"
 
 -- | /O(log n)/.
 (!!) :: Stream a -> Integer -> a
-(!!) = flip index
+(!!) = index
 
 -- | /O(log n)/.
 drop :: Integer -> Stream a -> Stream a

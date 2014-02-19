@@ -46,6 +46,7 @@ import Control.Applicative
 import Control.Comonad
 import Data.Functor.Apply
 import Data.Functor.Extend
+import Data.Functor.Rep
 import Data.Foldable
 import Data.IORef(newIORef, atomicModifyIORef)
 import Data.Traversable
@@ -165,7 +166,7 @@ splits (Supply _ l r) n = case n `quotRem` 2 of
 {-# SPECIALIZE splits :: Supply a -> Integer -> Supply a #-}
 
 splitSkew :: Supply a -> Skew.Stream (Supply a)
-splitSkew = Skew.tabulate . splits
+splitSkew = tabulate . splits
 
 split2 :: Supply a -> (Supply a, Supply a)
 split2 (Supply _ l r) = (l, r)

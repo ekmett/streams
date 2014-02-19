@@ -1,3 +1,8 @@
+3.2
+---
+* Switched to `tabulate` and `index` from `adjunctions`. Note: this reversed the argument order to `index`.
+* Proper upper bounds on dependencies.
+
 3.1.1
 -----
 * Marked modules appropriately Trustworthy
