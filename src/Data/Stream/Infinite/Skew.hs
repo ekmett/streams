@@ -1,4 +1,5 @@
 {-# LANGUAGE PatternGuards, BangPatterns #-}
+{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE CPP #-}
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 702
 {-# LANGUAGE Trustworthy #-}
@@ -52,6 +53,8 @@ import Control.Comonad
 import Data.Distributive
 import Data.Functor.Alt
 import Data.Functor.Extend
+import Data.Functor.Rep (Representable)
+import qualified Data.Functor.Rep as Representable
 import Data.Foldable hiding (toList)
 import Data.Traversable
 import Data.Semigroup hiding (Last)
@@ -170,6 +173,11 @@ instance Traversable1 Stream where
 
 instance Distributive Stream where
   distribute w = tabulate (\i -> fmap (!! i) w)
+
+instance Representable Stream where
+  type Rep Stream = Integer
+  tabulate        = tabulate
+  index           = (!!)
 
 instance Semigroup (Stream a) where
   (<>) = (<!>)

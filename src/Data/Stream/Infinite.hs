@@ -1,4 +1,5 @@
 {-# LANGUAGE PatternGuards #-}
+{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE CPP #-}
 #if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 702
 {-# LANGUAGE Trustworthy #-}
@@ -85,6 +86,7 @@ import Data.Char (isSpace)
 import Data.Data
 import Data.Functor.Apply
 import Data.Functor.Extend
+import Data.Functor.Rep
 import Data.Semigroup
 import Data.Foldable
 import Data.Traversable
@@ -112,6 +114,11 @@ instance Functor Stream where
 
 instance Distributive Stream where
   distribute w = fmap head w :> distribute (fmap tail w)
+
+instance Representable Stream where
+  type Rep Stream = Int
+  tabulate f      = unfold (\i -> (,) (f i) $! (i + 1)) 0
+  index           = (!!)
 
 -- | Extract the first element of the sequence.
 head :: Stream a -> a
