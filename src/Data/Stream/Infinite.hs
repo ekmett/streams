@@ -87,9 +87,11 @@ import Data.Data
 import Data.Functor.Apply
 import Data.Functor.Extend
 import Data.Functor.Rep
+#if !(MIN_VERSION_base(4,8,0))
 import Data.Semigroup
-import Data.Foldable
 import Data.Traversable
+#endif
+import Data.Foldable
 import Data.Distributive
 import Data.Semigroup.Traversable
 import Data.Semigroup.Foldable

@@ -29,7 +29,9 @@ module Data.Stream.Future
 import Prelude hiding (head, tail, map, length)
 import Control.Applicative
 import Control.Comonad
+#if !(MIN_VERSION_base(4,8,0))
 import Data.Foldable
+#endif
 import Data.Functor.Alt
 import Data.Functor.Extend
 import Data.Traversable

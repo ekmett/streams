@@ -54,8 +54,12 @@ import Control.Applicative hiding (empty)
 import Control.Comonad
 import Data.Functor.Alt
 import Data.Functor.Extend
+#if MIN_VERSION_base(4,8,0)
+import Data.Foldable hiding (toList, length)
+#else
 import Data.Foldable hiding (toList)
 import Data.Traversable (Traversable, traverse)
+#endif
 import Data.Semigroup hiding (Last)
 import Data.Semigroup.Foldable
 import Data.Semigroup.Traversable
