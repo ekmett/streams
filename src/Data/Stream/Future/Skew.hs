@@ -38,7 +38,6 @@ module Data.Stream.Future.Skew
     , span
     , split     -- O(log n)
     , splitW    -- O(log n)
-    , repeat
     , replicate -- O(log n)
     , insert    -- O(n)
     , insertBy
@@ -54,14 +53,16 @@ import Control.Comonad
 import Data.Functor.Alt
 import Data.Functor.Extend
 #if MIN_VERSION_base(4,8,0)
-import Data.Foldable hiding (toList)
+import Prelude hiding (tail, drop, dropWhile, last, span, repeat, replicate, break)
+import Data.Foldable (toList)
 #else
+import Data.Foldable
 import Data.Traversable (Traversable, traverse)
+import Prelude hiding (null, tail, drop, dropWhile, length, foldr, last, span, repeat, replicate, break)
 #endif
 import Data.Semigroup hiding (Last)
 import Data.Semigroup.Foldable
 import Data.Semigroup.Traversable
-import Prelude hiding (null, head, tail, drop, dropWhile, length, foldr, last, span, repeat, replicate, break)
 
 infixr 5 :<, <|
 
@@ -161,7 +162,9 @@ instance ComonadApply Future where
   (<@>) = (<.>)
 
 instance Applicative Future where
-  pure = repeat
+  pure a0 = go a0 (Tip a0) where
+    go :: a -> Complete a -> Future a
+    go a as | ass <- bin a as as = as :< go a ass
   (<*>) = (<.>)
 
 instance Alt Future where
@@ -178,8 +181,10 @@ instance Foldable Future where
   null _ = False
 #endif
 
+#if !(MIN_VERSION_base(4,8,0))
 toList :: Future a -> [a]
 toList = foldr (:) []
+#endif
 
 instance Foldable1 Future where
   foldMap1 f (t :< ts) = foldMap1 f t <> foldMap1 f ts
@@ -192,13 +197,6 @@ instance Traversable Future where
 instance Traversable1 Future where
   traverse1 f (t :< ts) = (:<) <$> traverse1 f t <.> traverse1 f ts
   traverse1 f (Last t) = Last <$> traverse1 f t
-
-repeat :: a -> Future a
-repeat a0 = go a0 (Tip a0)
-    where
-      go :: a -> Complete a -> Future a
-      go a as | ass <- bin a as as = as :< go a ass
-{-# INLINE repeat #-}
 
 -- | /O(log n)/
 replicate :: Int -> a -> Future a
