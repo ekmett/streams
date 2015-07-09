@@ -181,11 +181,6 @@ instance Foldable Future where
   null _ = False
 #endif
 
-#if !(MIN_VERSION_base(4,8,0))
-toList :: Future a -> [a]
-toList = foldr (:) []
-#endif
-
 instance Foldable1 Future where
   foldMap1 f (t :< ts) = foldMap1 f t <> foldMap1 f ts
   foldMap1 f (Last t) = foldMap1 f t
