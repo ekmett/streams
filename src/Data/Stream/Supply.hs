@@ -47,9 +47,11 @@ import Control.Comonad
 import Data.Functor.Apply
 import Data.Functor.Extend
 import Data.Functor.Rep
-import Data.Foldable
 import Data.IORef(newIORef, atomicModifyIORef)
+#if !(MIN_VERSION_base(4,8,0))
+import Data.Foldable
 import Data.Traversable
+#endif
 import Data.Semigroup
 import Data.Semigroup.Foldable
 import Data.Semigroup.Traversable
