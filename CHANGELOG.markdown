@@ -1,3 +1,8 @@
+3.3
+---
+* Removed a number of redundant parts of the API. If a method you were using has been removed, consider the classes available. No functionality was lost.
+* Better support for GHC 7.10, the `Foldable (length, null)` members are now defined directly leading to asymptotic improvements and helping to further shrink the API.
+
 3.2.2
 -----
 * Bug fix in `Data.Stream.Infinite.Skew` and removed `fromList`.
