@@ -6,7 +6,7 @@
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Stream.Future
--- Copyright   :  (C) 2011 Edward Kmett
+-- Copyright   :  (C) 2011-2015 Edward Kmett
 -- License     :  BSD-style (see the file LICENSE)
 --
 -- Maintainer  :  Edward Kmett <ekmett@gmail.com>
@@ -17,16 +17,12 @@
 
 module Data.Stream.Future
   ( Future(..)
-  , cons, (<|)
-  , head
   , tail
   , length
-  , tails
-  , map
   , index
   ) where
 
-import Prelude hiding (head, tail, map, length)
+import Prelude hiding (tail)
 #if !(MIN_VERSION_base(4,8,0))
 import Control.Applicative
 #endif
@@ -44,7 +40,7 @@ import Data.Semigroup.Traversable
 import Data.Data
 #endif
 
-infixr 5 :<, <|
+infixr 5 :<
 
 data Future a = Last a | a :< Future a deriving
   ( Eq, Ord, Show, Read
@@ -53,40 +49,19 @@ data Future a = Last a | a :< Future a deriving
 #endif
   )
 
-(<|) :: a -> Future a -> Future a
-(<|) = (:<)
-{-# INLINE (<|) #-}
-
-cons :: a -> Future a -> Future a
-cons = (:<)
-{-# INLINE cons #-}
-
-head :: Future a -> a
-head (Last a) = a
-head (a :< _) = a
-{-# INLINE head #-}
-
+#if __GLASGOW_HASKELL__ < 710
 length :: Future a -> Int
 length = go 1
   where
     go !n (Last _)  = n
     go !n (_ :< as) = go (n + 1) as
 {-# INLINE length #-}
+#endif
 
 tail :: Future a -> Maybe (Future a)
 tail (Last _) = Nothing
 tail (_ :< as) = Just as
 {-# INLINE tail #-}
-
-tails :: Future a -> Future (Future a)
-tails w@(_ :< as) = w :< tails as
-tails w@(Last _)  = Last w
-{-# INLINE tails #-}
-
-map :: (a -> b) -> Future a -> Future b
-map f (a :< as) = f a :< map f as
-map f (Last a)  = Last (f a)
-{-# INLINE map #-}
 
 index :: Int -> Future a -> a
 index n aas
@@ -97,12 +72,21 @@ index n aas
     _ :< as -> index (n - 1) as
 
 instance Functor Future where
-  fmap = map
+  fmap f (a :< as) = f a :< fmap f as
+  fmap f (Last a)  = Last (f a)
   b <$ (_ :< as) = b :< (b <$ as)
   b <$ _         = Last b
 
 instance Foldable Future where
   foldMap = foldMapDefault
+#if __GLASGOW_HASKELL__ >= 710
+  length = go 1
+    where
+      go !n (Last _)  = n
+      go !n (_ :< as) = go (n + 1) as
+  {-# INLINE length #-}
+  null _ = False
+#endif
 
 instance Traversable Future where
   traverse f (Last a)  = Last <$> f a
@@ -118,8 +102,12 @@ instance Extend Future where
   extended = extend
 
 instance Comonad Future where
-  extract = head
-  duplicate = tails
+  extract (Last a) = a
+  extract (a :< _) = a
+
+  duplicate w@(_ :< as) = w :< duplicate as
+  duplicate w@(Last _)  = Last w
+
   extend f w@(_ :< as) = f w :< extend f as
   extend f w@(Last _)  = Last (f w)
 
@@ -152,5 +140,3 @@ instance Applicative Future where
   (<*>) = (<.>)
   (<* ) = (<. )
   ( *>) = ( .>)
-
-

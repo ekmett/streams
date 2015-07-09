@@ -1,3 +1,7 @@
+3.2.2
+-----
+* Bug fix in `Data.Stream.Infinite.Skew` and removed `fromList`.
+
 3.2.1
 -----
 * Add support for `semigroupoids` 5 and GHC 7.10
