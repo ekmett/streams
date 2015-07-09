@@ -39,7 +39,6 @@ module Data.Stream.Infinite.Skew
     , insertBy
     , adjust    -- O(log n)
     , update    -- O(log n)
-    , fromList
     , from
     , indexed
     , interleave
@@ -269,23 +268,23 @@ dropComplete i (Bin w _ l r) f = case compare (i - 1) w' of
     where w' = div w 2
 dropComplete _ _ _ = error "dropComplete"
 
--- /O(n)/.
+-- | /O(n)/.
 dropWhile :: (a -> Bool) -> Stream a -> Stream a
 dropWhile p as
   | p (head as) = dropWhile p (tail as)
   | otherwise   = as
 
--- /O(n)/
+-- | /O(n)/
 span :: (a -> Bool) -> Stream a -> ([a], Stream a)
 span p as
   | a <- head as, p a = first (a:) $ span p (tail as)
   | otherwise = ([], as)
 
--- /O(n)/
+-- | /O(n)/
 break :: (a -> Bool) -> Stream a -> ([a], Stream a)
 break p = span (not . p)
 
--- /(O(n), O(log n))/ split at _some_ edge where function goes from False to True.
+-- | /(O(n), O(log n))/ split at _some_ edge where function goes from False to True.
 -- best used with a monotonic function
 split :: (a -> Bool) -> Stream a -> ([a], Stream a)
 split p (a :< as)
@@ -300,7 +299,7 @@ splitComplete p t@(Bin _ a l r) f
   | p (extract r), (ts, fs) <- splitComplete p l (:< f r) = (a:ts, fs)
   |                (ts, fs) <- splitComplete p r f        = (a:foldr (:) ts l, fs)
 
--- /(O(n), O(log n))/ split at _some_ edge where function goes from False to True.
+-- | /(O(n), O(log n))/ split at _some_ edge where function goes from False to True.
 -- best used with a monotonic function
 --
 -- > splitW p xs = (map extract &&& fmap (fmap extract)) . split p . duplicate
@@ -317,18 +316,15 @@ splitCompleteW p t@(Bin _ a l r) f
   | w <- f r, p w, (ts, fs) <- splitCompleteW p l (:< w) = (a:ts, fs)
   |                (ts, fs) <- splitCompleteW p r f      = (a:foldr (:) ts l, fs)
 
-fromList :: [a] -> Stream a
-fromList = foldr (<|) (error "fromList: finite list")
-
--- /O(n)/
+-- | /O(n)/
 insert :: Ord a => a -> Stream a -> Stream a
 insert a as | (ts, as') <- split (a<=) as = foldr (<|) (a <| as') ts
 
--- /O(n)/. Finds the split in O(log n), but then has to recons
+-- | /O(n)/. Finds the split in O(log n), but then has to recons
 insertBy :: (a -> a -> Ordering) -> a -> Stream a -> Stream a
 insertBy cmp a as | (ts, as') <- split (\b -> cmp a b <= EQ) as = foldr (<|) (a <| as') ts
 
--- /O(log n)/ Change the value of the nth entry in the future
+-- | /O(log n)/ Change the value of the nth entry in the future
 adjust :: Integer -> (a -> a) -> Stream a -> Stream a
 adjust !n f (a :< as)
   | n < w = adjustComplete n f a :< as
@@ -340,7 +336,7 @@ adjustComplete 0 f (Tip a) = Tip (f a)
 adjustComplete _ _ t@Tip{} = t
 adjustComplete n f (Bin m a l r)
   | n == 0 = Bin m (f a) l r
-  | n < w = Bin m a (adjustComplete (n - 1) f l) r
+  | n <= w = Bin m a (adjustComplete (n - 1) f l) r
   | otherwise = Bin m a l (adjustComplete (n - 1 - w) f r)
   where w = weight l
 
