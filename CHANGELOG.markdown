@@ -1,3 +1,7 @@
+3.2.1
+-----
+* Add support for `semigroupoids` 5 and GHC 7.10
+
 3.2
 ---
 * Switched to `tabulate` and `index` from `adjunctions`. Note: this reversed the argument order to `index`.
