@@ -72,7 +72,7 @@ library
     adjunctions   >= 4.0.1   && < 5,
     comonad       >= 4       && < 5,
     distributive  >= 0.2.1   && < 1,
-    semigroupoids >= 4       && < 5,
+    semigroupoids >= 4       && < 6,
     semigroups    >= 0.8.3.1 && < 1
 
   extensions: CPP
