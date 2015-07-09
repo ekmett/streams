@@ -42,7 +42,9 @@ module Data.Stream.Supply
   , split4
   ) where
 
+#if !(MIN_VERSION_base(4,8,0))
 import Control.Applicative
+#endif
 import Control.Comonad
 import Data.Functor.Apply
 import Data.Functor.Extend

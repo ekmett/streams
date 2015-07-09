@@ -1,6 +1,6 @@
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE CPP #-}
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 702
+#if __GLASGOW_HASKELL__ >= 702 && __GLASGOW_HASKELL__ < 710
 {-# LANGUAGE Trustworthy #-}
 #endif
 -----------------------------------------------------------------------------
@@ -27,7 +27,9 @@ module Data.Stream.Future
   ) where
 
 import Prelude hiding (head, tail, map, length)
+#if !(MIN_VERSION_base(4,8,0))
 import Control.Applicative
+#endif
 import Control.Comonad
 #if !(MIN_VERSION_base(4,8,0))
 import Data.Foldable
