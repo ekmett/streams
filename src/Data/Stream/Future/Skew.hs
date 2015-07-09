@@ -3,6 +3,7 @@
 #if __GLASGOW_HASKELL__ >= 702 && __GLASGOW_HASKELL__ < 710
 {-# LANGUAGE Trustworthy #-}
 #endif
+
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Stream.Future.Skew
@@ -88,8 +89,8 @@ instance Foldable Complete where
   foldr f z (Tip a) = f a z
   foldr f z (Bin _ a l r) = f a (foldr f (foldr f z r) l)
 #if MIN_VERSION_base(4,8,0)
-  length (Last t) = weight t
-  length (t :< ts) = weight t + length ts
+  length Tip{} = 1
+  length (Bin n _ _ _) = n
   null _ = False
 #endif
 
@@ -171,6 +172,11 @@ instance Foldable Future where
   foldMap f (Last t) = foldMap f t
   foldr f z (t :< ts) = foldr f (foldr f z ts) t
   foldr f z (Last t) = foldr f z t
+#if MIN_VERSION_base(4,8,0)
+  length (Last t) = weight t
+  length (t :< ts) = weight t + length ts
+  null _ = False
+#endif
 
 toList :: Future a -> [a]
 toList = foldr (:) []
@@ -323,7 +329,7 @@ dropComplete _ _ _ = error "drop: index out of range"
 -- /O(n)/.
 dropWhile :: (a -> Bool) -> Future a -> Maybe (Future a)
 dropWhile p as
-  | p (head as) = tail as >>= dropWhile p
+  | p (extract as) = tail as >>= dropWhile p
   | otherwise = Just as
 
 -- /O(n)/
