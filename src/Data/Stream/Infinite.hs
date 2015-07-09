@@ -20,12 +20,9 @@ module Data.Stream.Infinite (
    -- * The type of streams
      Stream(..)
    -- * Basic functions
-   , head   -- :: Stream a -> a
    , tail   -- :: Stream a -> Stream a
    , inits  -- :: Stream a -> Stream [a]
-   , tails  -- :: Stream a -> Stream (Stream a)
    -- * Stream transformations
-   , map         -- :: (a -> b) -> Stream a -> Stream b
    , intersperse -- :: a -> Stream a -> Stream
    , interleave  -- :: Stream a -> Stream a -> Stream a
    , scanl       -- :: (b -> a -> b) -> b -> Stream a -> Stream b
@@ -35,7 +32,6 @@ module Data.Stream.Infinite (
    , transpose   -- :: Stream (Stream a) -> Stream (Stream a)
    -- * Building streams
    , iterate     -- :: (a -> a) -> a -> Stream a
-   , repeat      -- :: a -> Stream a
    , cycle       -- :: NonEmpty a -> Stream a
    , unfold      -- :: (a -> (b, a)) -> a -> Stream b
    -- * Extracting sublists
@@ -67,12 +63,10 @@ module Data.Stream.Infinite (
    , unwords     -- :: Stream String -> Stream Char
    , lines       -- :: Stream Char -> Stream String
    , unlines     -- :: Stream String -> Stream Char
-   -- * Converting to and from an infinite list
-   , fromList    -- :: [a] -> Stream a
    ) where
 
 import Prelude hiding
-  ( head, tail, map, scanr, scanr1, scanl, scanl1
+  ( tail, map, scanr, scanr1, scanl, scanl1
   , iterate, take, drop, takeWhile
   , dropWhile, repeat, cycle, filter
   , (!!), zip, unzip, zipWith, words
@@ -108,16 +102,12 @@ data Stream a = a :> Stream a deriving
 
 infixr 5 :>
 
--- | Map a pure function over a stream
-map :: (a -> b) -> Stream a -> Stream b
-map f (a :> as) = f a :> map f as
-
 instance Functor Stream where
-  fmap = map
-  b <$ _ = repeat b
+  fmap f (a :> as) = f a :> fmap f as
+  b <$ _ = pure b
 
 instance Distributive Stream where
-  distribute w = fmap head w :> distribute (fmap tail w)
+  distribute w = fmap extract w :> distribute (fmap tail w)
 
 instance Representable Stream where
   type Rep Stream = Int
@@ -127,29 +117,20 @@ instance Representable Stream where
     | n > 0     = xs !! (n - 1)
     | otherwise = error "Stream.!! negative argument"
 
--- | Extract the first element of the sequence.
-head :: Stream a -> a
-head (a :> _) = a
-{-# INLINE head #-}
 
 -- | Extract the sequence following the head of the stream.
 tail :: Stream a -> Stream a
 tail (_ :> as) = as
 {-# INLINE tail #-}
 
--- | The 'tails' function takes a stream @xs@ and returns all the
--- suffixes of @xs@.
-tails :: Stream a -> Stream (Stream a)
-tails w = w :> tails (tail w)
-
 instance Extend Stream where
-  duplicated = tails
-  extended f w = f w :> extended f (tail w)
+  duplicated = duplicate
+  extended = extend
 
 instance Comonad Stream where
-  duplicate = tails
+  duplicate w = w :> duplicate (tail w)
   extend f w = f w :> extend f (tail w)
-  extract = head
+  extract (a :> _) = a
 
 instance Apply Stream where
   (f :> fs) <.> (a :> as) = f a :> (fs <.> as)
@@ -161,13 +142,8 @@ instance ComonadApply Stream where
   as        <@  _         = as
   _          @> bs        = bs
 
--- | 'repeat' @x@ returns a constant stream, where all elements are
--- equal to @x@.
-repeat :: a -> Stream a
-repeat a = as where as = a :> as
-
 instance Applicative Stream where
-  pure = repeat
+  pure a = as where as = a :> as
   (<*>) = (<.>)
   (<* ) = (<. )
   ( *>) = ( .>)
@@ -192,8 +168,8 @@ unfold :: (a -> (b, a)) -> a -> Stream b
 unfold f c | (x, d) <- f c = x :> unfold f d
 
 instance Monad Stream where
-  return = repeat
-  m >>= f = unfold (\(bs :> bss) -> (head bs, tail <$> bss)) (fmap f m)
+  return = pure
+  m >>= f = unfold (\(bs :> bss) -> (extract bs, tail <$> bss)) (fmap f m)
   _ >> bs = bs
 
 -- | Interleave two Streams @xs@ and @ys@, alternating elements
@@ -214,7 +190,7 @@ interleave ~(x :> xs) ys = x :> interleave ys xs
 --
 -- > inits _|_ = _|_
 inits :: Stream a -> Stream [a]
-inits xs = [] :> ((head xs :) <$> inits (tail xs))
+inits xs = [] :> ((extract xs :) <$> inits (tail xs))
 
 -- | @'intersperse' y xs@ creates an alternating stream of
 -- elements from @xs@ and @y@.
@@ -246,7 +222,7 @@ scanl1' f ~(x :> xs) = scanl' f x xs
 -- | 'transpose' computes the transposition of a stream of streams.
 transpose :: Stream (Stream a) -> Stream (Stream a)
 transpose ~((x :> xs) :> yss) =
-  (x :> (head <$> yss)) :> transpose (xs :> (tail <$> yss))
+  (x :> (extract <$> yss)) :> transpose (xs :> (tail <$> yss))
 
 -- | @'iterate' f x@ produces the infinite sequence
 -- of repeated applications of @f@ to @x@.
@@ -291,7 +267,7 @@ drop n xs
 splitAt :: Int -> Stream a -> ([a],Stream a)
 splitAt n xs
   | n == 0 = ([],xs)
-  | n > 0, (prefix, rest) <- splitAt (n - 1) (tail xs) = (head xs : prefix, rest)
+  | n > 0, (prefix, rest) <- splitAt (n - 1) (tail xs) = (extract xs : prefix, rest)
   | otherwise = error "Stream.splitAt: negative argument"
 
 -- | @'takeWhile' p xs@ returns the longest prefix of the stream
@@ -457,11 +433,3 @@ lines xs | (l, ys) <- break (== '\n') xs = l :> lines (tail ys)
 -- joins lines, after appending a terminating newline to each.
 unlines :: Stream String -> Stream Char
 unlines ~(x :> xs) = foldr (:>) ('\n' :> unlines xs) x
-
--- | The 'fromList' converts an infinite list to a
--- stream.
---
--- /Beware/: Passing a finite list, will cause an error.
-fromList :: [a] -> Stream a
-fromList (x:xs) = x :> fromList xs
-fromList []     = error "Stream.listToStream applied to finite list"
