@@ -6,7 +6,7 @@
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Stream.Future.Skew
--- Copyright   :  (C) 2008-2011 Edward Kmett,
+-- Copyright   :  (C) 2008-2015 Edward Kmett,
 --                (C) 2004 Dave Menendez
 -- License     :  BSD-style (see the file LICENSE)
 --
@@ -24,11 +24,8 @@
 module Data.Stream.Future.Skew
     ( Future(..)
     , (<|)      -- O(1)
-    , cons
     , length    -- O(log n)
-    , head      -- O(1)
     , tail      -- O(1)
-    , tails
     , last      -- O(log n)
     , uncons    -- O(1)
     , index     -- O(log n)
@@ -48,6 +45,7 @@ module Data.Stream.Future.Skew
     , adjust    -- O(log n)
     , fromList
     , toFuture
+    , singleton
     ) where
 
 import Control.Applicative hiding (empty)
@@ -55,9 +53,8 @@ import Control.Comonad
 import Data.Functor.Alt
 import Data.Functor.Extend
 #if MIN_VERSION_base(4,8,0)
-import Data.Foldable hiding (toList, length)
-#else
 import Data.Foldable hiding (toList)
+#else
 import Data.Traversable (Traversable, traverse)
 #endif
 import Data.Semigroup hiding (Last)
@@ -90,6 +87,11 @@ instance Foldable Complete where
   foldMap f (Bin _ a l r) = f a `mappend` foldMap f l `mappend` foldMap f r
   foldr f z (Tip a) = f a z
   foldr f z (Bin _ a l r) = f a (foldr f (foldr f z r) l)
+#if MIN_VERSION_base(4,8,0)
+  length (Last t) = weight t
+  length (t :< ts) = weight t + length ts
+  null _ = False
+#endif
 
 instance Foldable1 Complete where
   foldMap1 f (Tip a) = f a
@@ -134,7 +136,8 @@ instance Extend Future where
 instance Comonad Future where
   extend g (Last t)  = Last (extendTree g t Last)
   extend g (t :< ts) = extendTree g t (:< ts) :< extend g ts
-  extract = head
+  extract (a :< _) = extract a
+  extract (Last a) = extract a
 
 extendTree :: (Future a -> b) -> Complete a -> (Complete a -> Future a) -> Complete b
 extendTree g w@Tip{}         f = Tip (g (f w))
@@ -236,10 +239,12 @@ singleton :: a -> Future a
 singleton a = Last (Tip a)
 {-# INLINE singleton #-}
 
+#if !(MIN_VERSION_base(4,8,0))
 -- | /O(log n)/.
 length :: Future a -> Int
 length (Last t) = weight t
 length (t :< ts) = weight t + length ts
+#endif
 
 -- | /O(1)/ cons
 (<|) :: a -> Future a -> Future a
@@ -250,17 +255,6 @@ a <| (l :< r :< as)
 a <| as = Tip a :< as
 {-# INLINE (<|) #-}
 
-
-cons :: a -> Future a -> Future a
-cons = (<|)
-{-# INLINE cons #-}
-
--- | /O(1)/
-head :: Future a -> a
-head (a :< _) = extract a
-head (Last a) = extract a
-{-# INLINE head #-}
-
 -- | /O(1)/.
 tail :: Future a -> Maybe (Future a)
 tail (Tip{} :< ts) = Just ts
@@ -268,10 +262,6 @@ tail (Bin _ _ l r :< ts) = Just (l :< r :< ts)
 tail (Last Tip{}) = Nothing
 tail (Last (Bin _ _ l r)) = Just (l :< Last r)
 {-# INLINE tail #-}
-
-tails :: Future a -> Future (Future a)
-tails = duplicate
-{-# INLINE tails #-}
 
 -- | /O(log n)/.
 last :: Future a -> a

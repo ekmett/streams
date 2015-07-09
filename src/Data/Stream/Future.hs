@@ -22,20 +22,22 @@ module Data.Stream.Future
   , index
   ) where
 
+#if MIN_VERSION_base(4,8,0)
 import Prelude hiding (tail)
-#if !(MIN_VERSION_base(4,8,0))
+#else
 import Control.Applicative
-#endif
-import Control.Comonad
-#if !(MIN_VERSION_base(4,8,0))
+import Prelude hiding (tail, length)
 import Data.Foldable
 #endif
+
+import Control.Comonad
 import Data.Functor.Alt
 import Data.Functor.Extend
 import Data.Traversable
 import Data.Semigroup hiding (Last)
 import Data.Semigroup.Foldable
 import Data.Semigroup.Traversable
+
 #ifdef LANGUAGE_DeriveDataTypeable
 import Data.Data
 #endif
