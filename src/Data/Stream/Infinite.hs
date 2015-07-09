@@ -152,6 +152,10 @@ instance Foldable Stream where
   fold (m :> ms) = m `mappend` fold ms
   foldMap f (a :> as) = f a `mappend` foldMap f as
   foldr f0 _ = go f0 where go f (a :> as) = f a (go f as)
+#if __GLASGOW_HASKELL__ > 710
+  length _ = error "infinite length"
+  null _ = False
+#endif
 
 instance Traversable Stream where
   traverse f ~(a :> as) = (:>) <$> f a <*> traverse f as
