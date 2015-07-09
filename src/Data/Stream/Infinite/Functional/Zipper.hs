@@ -4,8 +4,8 @@
 #endif
 -----------------------------------------------------------------------------
 -- |
--- Module      :  Data.Zipper.Infinite.Functional.Zipper
--- Copyright   :  (C) 2011 Edward Kmett,
+-- Module      :  Data.Stream.Infinite.Functional.Zipper
+-- Copyright   :  (C) 2011-2015 Edward Kmett
 -- License     :  BSD-style (see the file LICENSE)
 --
 -- Maintainer  :  Edward Kmett <ekmett@gmail.com>
@@ -49,24 +49,17 @@ import Prelude hiding
   , dropWhile, repeat, cycle, filter
   , (!!), zip, unzip, zipWith, words
   , unwords, lines, unlines, break, span
-  , splitAt, foldr
+  , splitAt, foldr, reverse
   )
 
 import Control.Applicative
 import Control.Comonad
--- import Data.Char (isSpace)
 #ifdef LANGUAGE_DeriveDataTypeable
 import Data.Data
 #endif
 import Data.Functor.Extend
 import Data.Functor.Apply
--- import Data.Monoid
 import Data.Semigroup
--- import Data.Foldable
--- import Data.Traversable
--- import Data.Semigroup.Traversable
--- import Data.Semigroup.Foldable
--- import Data.Zipper.NonEmpty (NonEmpty(..))
 
 data Zipper a = !Integer :~ !(Integer -> a)
 #ifdef LANGUAGE_DeriveDataTypeable
@@ -75,6 +68,9 @@ data Zipper a = !Integer :~ !(Integer -> a)
 
 toSequence :: (Integer -> a) -> Zipper a
 toSequence = (0 :~)
+
+reverse :: Zipper a -> Zipper a
+reverse (n :~ f) = negate n :~ f . negate
 
 infixr 0 :~
 
