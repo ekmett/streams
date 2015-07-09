@@ -24,9 +24,7 @@ module Data.Stream.Infinite.Skew
     ( Stream
     , (<|)      -- O(1)
     , (!!)
-    , head      -- O(1)
     , tail      -- O(1)
-    , tails
     , uncons    -- O(1)
     , drop      -- O(log n)
     , dropWhile -- O(n)
@@ -127,7 +125,7 @@ instance Comonad Stream where
       go :: (Stream a -> b) -> Complete a -> (Complete a -> Stream a) -> Complete b
       go g w@Tip{}         f = Tip (g (f w))
       go g w@(Bin n _ l r) f = Bin n (g (f w)) (go g l (:< f r))  (go g r f)
-  extract = head
+  extract (a :< _) = extract a
 
 instance Apply Stream where
   fs <.> as = mapWithIndex (\n f -> f (as !! n)) fs
@@ -215,20 +213,11 @@ a <| (l :< r :< as)
 a <| as = Tip a :< as
 {-# INLINE (<|) #-}
 
--- | /O(1)/
-head :: Stream a -> a
-head (a :< _) = extract a
-{-# INLINE head #-}
-
 -- | /O(1)/.
 tail :: Stream a -> Stream a
 tail (Tip{} :< ts) = ts
 tail (Bin _ _ l r :< ts) = l :< r :< ts
 {-# INLINE tail #-}
-
-tails :: Stream a -> Stream (Stream a)
-tails = duplicate
-{-# INLINE tails #-}
 
 -- | /O(1)/.
 uncons :: Stream a -> (a, Stream a)
@@ -271,13 +260,13 @@ dropComplete _ _ _ = error "dropComplete"
 -- | /O(n)/.
 dropWhile :: (a -> Bool) -> Stream a -> Stream a
 dropWhile p as
-  | p (head as) = dropWhile p (tail as)
+  | p (extract as) = dropWhile p (tail as)
   | otherwise   = as
 
 -- | /O(n)/
 span :: (a -> Bool) -> Stream a -> ([a], Stream a)
 span p as
-  | a <- head as, p a = first (a:) $ span p (tail as)
+  | a <- extract as, p a = first (a:) $ span p (tail as)
   | otherwise = ([], as)
 
 -- | /O(n)/
