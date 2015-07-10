@@ -1,6 +1,6 @@
-{-# LANGUAGE PatternGuards, BangPatterns #-}
+{-# LANGUAGE PatternGuards, BangPatterns, TypeFamilies #-}
 {-# LANGUAGE CPP #-}
-#if __GLASGOW_HASKELL__ >= 702 && __GLASGOW_HASKELL__ < 710
+#if __GLASGOW_HASKELL__ >= 702
 {-# LANGUAGE Trustworthy #-}
 #endif
 
@@ -43,7 +43,6 @@ module Data.Stream.Future.Skew
     , insertBy
     , update
     , adjust    -- O(log n)
-    , fromList
     , toFuture
     , singleton
     ) where
@@ -63,6 +62,9 @@ import Prelude hiding (null, tail, drop, dropWhile, length, foldr, last, span, r
 import Data.Semigroup hiding (Last)
 import Data.Semigroup.Foldable
 import Data.Semigroup.Traversable
+#if MIN_VERSION_base(4,7,0)
+import qualified GHC.Exts as Exts
+#endif
 
 infixr 5 :<, <|
 
@@ -378,15 +380,29 @@ splitCompleteW p t@(Bin _ a l r) f
   | w <- f r, p w, (ts, fs) <- splitCompleteW p l (:< w) = (a:ts, fs)
   |                (ts, fs) <- splitCompleteW p r f      = (a:foldr (:) ts l, fs)
 
+#if MIN_VERSION_base(4,7,0)
+instance Exts.IsList (Future a) where
+  type Item (Future a) = a
+  toList = Data.Foldable.toList
+  fromList [] = error "fromList: empty list"
+  fromList (x:xs) = go x xs
+    where go a [] = singleton a
+          go a (b:bs) = a <| go b bs
+#else
 fromList :: [a] -> Future a
 fromList [] = error "fromList: empty list"
 fromList (x:xs) = go x xs
   where go a [] = singleton a
         go a (b:bs) = a <| go b bs
+#endif
 
 toFuture :: [a] -> Maybe (Future a)
 toFuture [] = Nothing
+#if MIN_VERSION_base(4,7,0)
+toFuture xs = Just (Exts.fromList xs)
+#else
 toFuture xs = Just (fromList xs)
+#endif
 
 -- /O(n)/
 insert :: Ord a => a -> Future a -> Future a
