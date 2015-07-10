@@ -1,6 +1,7 @@
 {-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE CPP #-}
-#if __GLASGOW_HASKELL__ >= 702 && __GLASGOW_HASKELL__ < 710
+#if __GLASGOW_HASKELL__ >= 702
 {-# LANGUAGE Trustworthy #-}
 #endif
 -----------------------------------------------------------------------------
@@ -40,6 +41,10 @@ import Data.Semigroup.Traversable
 
 #ifdef LANGUAGE_DeriveDataTypeable
 import Data.Data
+#endif
+
+#if MIN_VERSION_base(4,7,0)
+import GHC.Exts as Exts
 #endif
 
 infixr 5 :<
@@ -142,3 +147,18 @@ instance Applicative Future where
   (<*>) = (<.>)
   (<* ) = (<. )
   ( *>) = ( .>)
+
+#if MIN_VERSION_base(4,7,0)
+instance Exts.IsList (Future a) where
+  type Item (Future a) = a
+
+  toList (Last a) = [a]
+  toList (a :< as) = a : toList as
+
+  fromList [] = error "Future.fromList: empty list"
+  fromList (x:xs) = go x xs where
+    go y [] = Last y
+    go y (z:zs) = y :< go z zs
+
+  fromListN _ = Exts.fromList
+#endif
