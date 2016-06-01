@@ -22,6 +22,8 @@ module Data.Stream.Infinite (
    -- * Basic functions
    , tail   -- :: Stream a -> Stream a
    , inits  -- :: Stream a -> Stream [a]
+   , prepend -- :: [a] -> Stream a -> Stream a
+   , concat -- :: Stream [a] -> Stream a
    -- * Stream transformations
    , intersperse -- :: a -> Stream a -> Stream
    , interleave  -- :: Stream a -> Stream a -> Stream a
@@ -71,7 +73,7 @@ import Prelude hiding
   , dropWhile, repeat, cycle, filter
   , (!!), zip, unzip, zipWith, words
   , unwords, lines, unlines, break, span
-  , splitAt, foldr
+  , splitAt, foldr, concat
   )
 
 #if !(MIN_VERSION_base(4,8,0))
@@ -87,7 +89,7 @@ import Data.Functor.Rep
 import Data.Semigroup
 import Data.Traversable
 #endif
-import Data.Foldable
+import Data.Foldable hiding (concat)
 import Data.Distributive
 import Data.Semigroup.Traversable
 import Data.Semigroup.Foldable
@@ -195,6 +197,14 @@ interleave ~(x :> xs) ys = x :> interleave ys xs
 -- > inits _|_ = _|_
 inits :: Stream a -> Stream [a]
 inits xs = [] :> ((extract xs :) <$> inits (tail xs))
+
+-- | Prepend a list to a stream.
+prepend :: Foldable f => f a -> Stream a -> Stream a
+prepend xs ys = foldr (:>) ys xs
+
+-- | Flatten a stream of lists into a stream.
+concat :: Foldable f => Stream (f a) -> Stream a
+concat = foldr prepend undefined
 
 -- | @'intersperse' y xs@ creates an alternating stream of
 -- elements from @xs@ and @y@.
