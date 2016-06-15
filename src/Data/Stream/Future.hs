@@ -153,7 +153,7 @@ instance Exts.IsList (Future a) where
   type Item (Future a) = a
 
   toList (Last a) = [a]
-  toList (a :< as) = a : toList as
+  toList (a :< as) = a : Exts.toList as
 
   fromList [] = error "Future.fromList: empty list"
   fromList (x:xs) = go x xs where
