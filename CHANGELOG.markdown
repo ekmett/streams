@@ -2,6 +2,8 @@
 ---
 * Removed a number of redundant parts of the API. If a method you were using has been removed, consider the classes available. No functionality was lost.
 * Better support for GHC 7.10, the `Foldable (length, null)` members are now defined directly leading to asymptotic improvements and helping to further shrink the API.
+* Added `prepend` and `concat` functions to `Data.Stream.Infinite`
+* Allow `comonad-5`
 
 3.2.2
 -----
