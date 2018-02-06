@@ -8,7 +8,7 @@ author:        Edward A. Kmett
 maintainer:    Edward A. Kmett <ekmett@gmail.com>
 stability:     provisional
 homepage:      http://github.com/ekmett/streams
-homepage:      http://github.com/ekmett/streams/issues
+bug-reports:   http://github.com/ekmett/streams/issues
 copyright:     Copyright 2011-2013 Edward Kmett
                Copyright 2010 Tony Morris, Oliver Taylor, Eelis van der Weegen
                Copyright 2007-2010 Wouter Swierstra, Bas van Dijk
