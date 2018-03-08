@@ -59,7 +59,9 @@ import Data.Data
 #endif
 import Data.Functor.Extend
 import Data.Functor.Apply
+#if !(MIN_VERSION_base(4,11,0))
 import Data.Semigroup
+#endif
 
 data Zipper a = !Integer :~ !(Integer -> a)
 #ifdef LANGUAGE_DeriveDataTypeable

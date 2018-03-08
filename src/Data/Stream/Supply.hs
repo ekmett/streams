@@ -54,7 +54,9 @@ import Data.IORef(newIORef, atomicModifyIORef)
 import Data.Foldable
 import Data.Traversable
 #endif
+#if !(MIN_VERSION_base(4,11,0))
 import Data.Semigroup
+#endif
 import Data.Semigroup.Foldable
 import Data.Semigroup.Traversable
 import System.IO.Unsafe (unsafeInterleaveIO)

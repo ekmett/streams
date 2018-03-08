@@ -35,7 +35,9 @@ import Control.Comonad
 import Data.Functor.Alt
 import Data.Functor.Extend
 import Data.Traversable
+#if !(MIN_VERSION_base(4,11,0))
 import Data.Semigroup hiding (Last)
+#endif
 import Data.Semigroup.Foldable
 import Data.Semigroup.Traversable
 

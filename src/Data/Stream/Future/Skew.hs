@@ -59,7 +59,9 @@ import Data.Foldable
 import Data.Traversable (Traversable, traverse)
 import Prelude hiding (null, tail, drop, dropWhile, length, foldr, last, span, repeat, replicate, break)
 #endif
+#if !(MIN_VERSION_base(4,11,0))
 import Data.Semigroup hiding (Last)
+#endif
 import Data.Semigroup.Foldable
 import Data.Semigroup.Traversable
 #if MIN_VERSION_base(4,7,0)
