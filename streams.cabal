@@ -51,7 +51,7 @@ description:
     the 'Stream', which is consistent with the behavior of the 'Applicative', and the view of a 'Stream' as a isomorphic to the reader
     monad from the natural numbers. Being infinite in length, there is no 'Alternative' instance.
   .
-  > data Stream a = a :< Stream a
+  > data Stream a = a :> Stream a
   .
   * "Data.Stream.Infinite.Skew" provides an infinite skew-binary random-access-list with the semantics of "Data.Stream.Infinite"
     Since every stream is infinite, the 'Applicative' instance can be considerably less strict than the corresponding instance for
