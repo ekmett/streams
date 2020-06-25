@@ -2,7 +2,7 @@ name:          streams
 category:      Control, Comonads
 version:       3.3
 license:       BSD3
-cabal-version: >= 1.6
+cabal-version: >= 1.10
 license-file:  LICENSE
 author:        Edward A. Kmett
 maintainer:    Edward A. Kmett <ekmett@gmail.com>
@@ -85,10 +85,10 @@ library
     semigroupoids >= 4       && < 6,
     semigroups    >= 0.8.3.1 && < 1
 
-  extensions: CPP
+  default-extensions: CPP
   if impl(ghc)
     cpp-options: -DLANGUAGE_DeriveDataTypeable
-    extensions: FlexibleContexts, DeriveDataTypeable
+    default-extensions: FlexibleContexts, DeriveDataTypeable
 
   exposed-modules:
     Data.Stream.Future
@@ -100,4 +100,5 @@ library
 
   hs-source-dirs: src
   ghc-options: -Wall
+  default-language: Haskell2010
 
