@@ -20,7 +20,6 @@ extra-source-files:
   README
   .ghci
   .gitignore
-  .travis.yml
   .vim.custom
 tested-with:   GHC == 7.4.2
              , GHC == 7.6.3
