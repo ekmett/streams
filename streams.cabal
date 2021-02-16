@@ -99,5 +99,7 @@ library
 
   hs-source-dirs: src
   ghc-options: -Wall
+  if impl(ghc >= 7.10)
+    ghc-options: -fno-warn-trustworthy-safe
   default-language: Haskell2010
 
