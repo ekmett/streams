@@ -119,6 +119,9 @@ instance Representable Stream where
     | n > 0     = xs !! (n - 1)
     | otherwise = error "Stream.!! negative argument"
 
+-- | Extract the first element of the stream.
+head :: Stream a -> a
+head (x :> _) = x
 
 -- | Extract the sequence following the head of the stream.
 tail :: Stream a -> Stream a
