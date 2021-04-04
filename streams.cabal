@@ -18,7 +18,6 @@ build-type:    Simple
 extra-source-files:
   CHANGELOG.markdown
   README
-  .ghci
   .gitignore
   .vim.custom
 tested-with:   GHC == 7.4.2
