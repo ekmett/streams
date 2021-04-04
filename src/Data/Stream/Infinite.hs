@@ -94,6 +94,7 @@ import Data.Distributive
 import Data.Semigroup.Traversable
 import Data.Semigroup.Foldable
 import Data.List.NonEmpty (NonEmpty(..))
+import Data.Boring (Boring (..), Absurd (..))
 
 data Stream a = a :> Stream a deriving
   ( Show
@@ -119,6 +120,13 @@ instance Representable Stream where
     | n > 0     = xs !! (n - 1)
     | otherwise = error "Stream.!! negative argument"
 
+-- | @since 3.3.1
+instance Boring a => Boring (Stream a) where
+  boring = pure boring
+
+-- | @since 3.3.1
+instance Absurd a => Absurd (Stream a) where
+  absurd = absurd . extract
 
 -- | Extract the sequence following the head of the stream.
 tail :: Stream a -> Stream a

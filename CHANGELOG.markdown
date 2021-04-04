@@ -1,3 +1,7 @@
+3.3.1
+-----
+* Add `Boring` and `Absurd` instances for infinite streams 
+
 3.3
 ---
 * Removed a number of redundant parts of the API. If a method you were using has been removed, consider the classes available. No functionality was lost.
