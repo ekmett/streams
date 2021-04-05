@@ -55,6 +55,7 @@ import Data.Semigroup hiding (Last)
 import Data.Semigroup.Foldable
 import Data.Semigroup.Traversable
 import Prelude hiding (null, head, tail, drop, dropWhile, length, foldr, last, span, repeat, replicate, (!!), break)
+import Data.Boring (Boring (..), Absurd (..))
 
 infixr 5 :<, <|
 
@@ -181,6 +182,14 @@ instance Representable Stream where
     | i < w     = indexComplete i t
     | otherwise = index ts (i - w)
     where w = weight t
+
+-- | @since 3.3.1
+instance Boring a => Boring (Stream a) where
+  boring = pure boring
+
+-- | @since 3.3.1
+instance Absurd a => Absurd (Stream a) where
+  absurd = absurd . extract
 
 instance Semigroup (Stream a) where
   (<>) = (<!>)
