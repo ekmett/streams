@@ -182,9 +182,11 @@ unfold :: (a -> (b, a)) -> a -> Stream b
 unfold f c | (x, d) <- f c = x :> unfold f d
 
 instance Monad Stream where
-  return = pure
   m >>= f = unfold (\(bs :> bss) -> (extract bs, tail <$> bss)) (fmap f m)
+#if !(MIN_VERSION_base(4,11,0))
+  return = pure
   _ >> bs = bs
+#endif
 
 -- | Interleave two Streams @xs@ and @ys@, alternating elements
 -- from each list.
