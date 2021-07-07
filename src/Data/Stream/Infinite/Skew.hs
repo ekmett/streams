@@ -22,7 +22,7 @@
 
 module Data.Stream.Infinite.Skew
     ( Stream
-    , (<|)      -- O(1)
+    , (>|)      -- O(1)
     , (!!)
     , tail      -- O(1)
     , uncons    -- O(1)
@@ -57,7 +57,7 @@ import Data.Semigroup.Traversable
 import Prelude hiding (null, head, tail, drop, dropWhile, length, foldr, last, span, repeat, replicate, (!!), break)
 import Data.Boring (Boring (..), Absurd (..))
 
-infixr 5 :<, <|
+infixr 5 :>, >|
 
 data Complete a
     = Tip a
@@ -112,7 +112,7 @@ weight (Bin w _ _ _) = w
 
 -- A future is a non-empty skew binary random access list of nodes.
 -- The last node, however, is allowed to contain fewer values.
-data Stream a = !(Complete a) :< Stream a
+data Stream a = !(Complete a) :> Stream a
 --  deriving Show
 
 instance Show a => Show (Stream a) where
@@ -120,18 +120,18 @@ instance Show a => Show (Stream a) where
     showString "fromList " . showsPrec 11 (toList as)
 
 instance Functor Stream where
-  fmap f (t :< ts) = fmap f t :< fmap f ts
+  fmap f (t :> ts) = fmap f t :> fmap f ts
 
 instance Extend Stream where
   extended = extend
 
 instance Comonad Stream where
-  extend g0 (t :< ts) = go g0 t (:< ts) :< extend g0 ts
+  extend g0 (t :> ts) = go g0 t (:> ts) :> extend g0 ts
     where
       go :: (Stream a -> b) -> Complete a -> (Complete a -> Stream a) -> Complete b
       go g w@Tip{}         f = Tip (g (f w))
-      go g w@(Bin n _ l r) f = Bin n (g (f w)) (go g l (:< f r))  (go g r f)
-  extract (a :< _) = extract a
+      go g w@(Bin n _ l r) f = Bin n (g (f w)) (go g l (:> f r))  (go g r f)
+  extract (a :> _) = extract a
 
 instance Apply Stream where
   fs <.> as = mapWithIndex (\n f -> f (as !! n)) fs
@@ -155,21 +155,21 @@ instance Alt Stream where
     (q,_) -> bs !! q
 
 instance Foldable Stream where
-  foldMap f (t :< ts) = foldMap f t `mappend` foldMap f ts
-  foldr f z (t :< ts) = foldr f (foldr f z ts) t
+  foldMap f (t :> ts) = foldMap f t `mappend` foldMap f ts
+  foldr f z (t :> ts) = foldr f (foldr f z ts) t
 #if __GLASGOW_HASKELL__ >= 710
   length _ = error "infinite length"
   null _ = False
 #endif
 
 instance Foldable1 Stream where
-  foldMap1 f (t :< ts) = foldMap1 f t <> foldMap1 f ts
+  foldMap1 f (t :> ts) = foldMap1 f t <> foldMap1 f ts
 
 instance Traversable Stream where
-  traverse f (t :< ts) = (:<) <$> traverse f t <*> traverse f ts
+  traverse f (t :> ts) = (:>) <$> traverse f t <*> traverse f ts
 
 instance Traversable1 Stream where
-  traverse1 f (t :< ts) = (:<) <$> traverse1 f t <.> traverse1 f ts
+  traverse1 f (t :> ts) = (:>) <$> traverse1 f t <.> traverse1 f ts
 
 instance Distributive Stream where
   distribute w = tabulate (\i -> fmap (!! i) w)
@@ -177,7 +177,7 @@ instance Distributive Stream where
 instance Representable Stream where
   type Rep Stream = Integer
   tabulate f      = mapWithIndex (const . f) (pure ())
-  index (t :< ts) i
+  index (t :> ts) i
     | i < 0     = error "index: negative index"
     | i < w     = indexComplete i t
     | otherwise = index ts (i - w)
@@ -205,12 +205,12 @@ repeat :: a -> Stream a
 repeat b = go b (Tip b)
     where
       go :: a -> Complete a -> Stream a
-      go a as | ass <- bin a as as = as :< go a ass
+      go a as | ass <- bin a as as = as :> go a ass
 
 mapWithIndex :: (Integer -> a -> b) -> Stream a -> Stream b
 mapWithIndex f0 as0 = spine f0 0 as0
   where
-    spine f m (a :< as) = tree f m a :< spine f (m + weight a) as
+    spine f m (a :> as) = tree f m a :> spine f (m + weight a) as
     tree f m (Tip a) = Tip (f m a)
     tree f m (Bin n a l r) = Bin n (f m a) (tree f (m + 1) l) (tree f (m + 1 + weight l) r)
 
@@ -221,22 +221,22 @@ from :: Num a => a -> Stream a
 from a = mapWithIndex ((+) . fromIntegral) (pure a)
 
 -- | /O(1)/ cons
-(<|) :: a -> Stream a -> Stream a
-a <| (l :< r :< as)
-  | weight l == weight r = bin a l r :< as
-a <| as = Tip a :< as
-{-# INLINE (<|) #-}
+(>|) :: a -> Stream a -> Stream a
+a >| (l :> r :> as)
+  | weight l == weight r = bin a l r :> as
+a >| as = Tip a :> as
+{-# INLINE (>|) #-}
 
 -- | /O(1)/.
 tail :: Stream a -> Stream a
-tail (Tip{} :< ts) = ts
-tail (Bin _ _ l r :< ts) = l :< r :< ts
+tail (Tip{} :> ts) = ts
+tail (Bin _ _ l r :> ts) = l :> r :> ts
 {-# INLINE tail #-}
 
 -- | /O(1)/.
 uncons :: Stream a -> (a, Stream a)
-uncons (Tip a       :< as)  = (a, as)
-uncons (Bin _ a l r :< as)  = (a, l :< r :< as)
+uncons (Tip a       :> as)  = (a, as)
+uncons (Bin _ a l r :> as)  = (a, l :> r :> as)
 {-# INLINE uncons #-}
 
 indexComplete :: Integer -> Complete a -> a
@@ -255,17 +255,17 @@ indexComplete _ _ = error "indexComplete"
 -- | /O(log n)/.
 drop :: Integer -> Stream a -> Stream a
 drop 0 ts = ts
-drop i (t :< ts) = case compare i w of
-  LT -> dropComplete i t (:< ts)
+drop i (t :> ts) = case compare i w of
+  LT -> dropComplete i t (:> ts)
   EQ -> ts
   GT -> drop (i - w) ts
   where w = weight t
 
 dropComplete :: Integer -> Complete a -> (Complete a -> Stream a) -> Stream a
 dropComplete 0 t f             = f t
-dropComplete 1 (Bin _ _ l r) f = l :< f r
+dropComplete 1 (Bin _ _ l r) f = l :> f r
 dropComplete i (Bin w _ l r) f = case compare (i - 1) w' of
-    LT -> dropComplete (i-1) l (:< f r)
+    LT -> dropComplete (i-1) l (:> f r)
     EQ -> f r
     GT -> dropComplete (i-1-w') r f
     where w' = div w 2
@@ -290,8 +290,8 @@ break p = span (not . p)
 -- | /(O(n), O(log n))/ split at _some_ edge where function goes from False to True.
 -- best used with a monotonic function
 split :: (a -> Bool) -> Stream a -> ([a], Stream a)
-split p (a :< as)
-  | p (extract as) = splitComplete p a (:< as)
+split p (a :> as)
+  | p (extract as) = splitComplete p a (:> as)
   | (ts, fs) <- split p as = (foldr (:) ts a, fs)
 
 -- for use when we know the split occurs within a given tree
@@ -299,7 +299,7 @@ splitComplete :: (a -> Bool) -> Complete a -> (Complete a -> Stream a) -> ([a], 
 splitComplete _ t@Tip{} f = ([], f t)
 splitComplete p t@(Bin _ a l r) f
   | p a                                                   = ([], f t)
-  | p (extract r), (ts, fs) <- splitComplete p l (:< f r) = (a:ts, fs)
+  | p (extract r), (ts, fs) <- splitComplete p l (:> f r) = (a:ts, fs)
   |                (ts, fs) <- splitComplete p r f        = (a:foldr (:) ts l, fs)
 
 -- | /(O(n), O(log n))/ split at _some_ edge where function goes from False to True.
@@ -307,8 +307,8 @@ splitComplete p t@(Bin _ a l r) f
 --
 -- > splitW p xs = (map extract &&& fmap (fmap extract)) . split p . duplicate
 splitW :: (Stream a -> Bool) -> Stream a -> ([a], Stream a)
-splitW p (a :< as)
-  | p as                    = splitCompleteW p a (:< as)
+splitW p (a :> as)
+  | p as                    = splitCompleteW p a (:> as)
   | (ts, fs) <- splitW p as = (foldr (:) ts a, fs)
 
 -- for use when we know the split occurs within a given tree
@@ -316,22 +316,22 @@ splitCompleteW :: (Stream a -> Bool) -> Complete a -> (Complete a -> Stream a) -
 splitCompleteW _ t@Tip{} f = ([], f t)
 splitCompleteW p t@(Bin _ a l r) f
   | w <- f t, p w                                        = ([], w)
-  | w <- f r, p w, (ts, fs) <- splitCompleteW p l (:< w) = (a:ts, fs)
+  | w <- f r, p w, (ts, fs) <- splitCompleteW p l (:> w) = (a:ts, fs)
   |                (ts, fs) <- splitCompleteW p r f      = (a:foldr (:) ts l, fs)
 
 -- | /O(n)/
 insert :: Ord a => a -> Stream a -> Stream a
-insert a as | (ts, as') <- split (a<=) as = foldr (<|) (a <| as') ts
+insert a as | (ts, as') <- split (a<=) as = foldr (>|) (a >| as') ts
 
 -- | /O(n)/. Finds the split in O(log n), but then has to recons
 insertBy :: (a -> a -> Ordering) -> a -> Stream a -> Stream a
-insertBy cmp a as | (ts, as') <- split (\b -> cmp a b <= EQ) as = foldr (<|) (a <| as') ts
+insertBy cmp a as | (ts, as') <- split (\b -> cmp a b <= EQ) as = foldr (>|) (a >| as') ts
 
 -- | /O(log n)/ Change the value of the nth entry in the future
 adjust :: Integer -> (a -> a) -> Stream a -> Stream a
-adjust !n f (a :< as)
-  | n < w = adjustComplete n f a :< as
-  | otherwise = a :< adjust (n - w) f as
+adjust !n f (a :> as)
+  | n < w = adjustComplete n f a :> as
+  | otherwise = a :> adjust (n - w) f as
   where w = weight a
 
 adjustComplete :: Integer -> (a -> a) -> Complete a -> Complete a
