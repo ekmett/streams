@@ -130,7 +130,9 @@ instance Applicative Zipper where
   _ *> bs = bs
 
 instance Monad Zipper where
+#if !(MIN_VERSION_base(4,11,0))
   return = repeat
+#endif
   (z :~ ma) >>= f = z :~ \ na -> case f (ma na) of
     nb :~ mb -> mb (nb + na - z)
 

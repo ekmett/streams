@@ -18,7 +18,6 @@ build-type:    Simple
 extra-source-files:
   CHANGELOG.markdown
   README
-  .ghci
   .gitignore
   .vim.custom
 tested-with:   GHC == 7.4.2
@@ -29,8 +28,10 @@ tested-with:   GHC == 7.4.2
              , GHC == 8.2.2
              , GHC == 8.4.4
              , GHC == 8.6.5
-             , GHC == 8.8.3
-             , GHC == 8.10.1
+             , GHC == 8.8.4
+             , GHC == 8.10.7
+             , GHC == 9.0.2
+             , GHC == 9.2.2
 description:
   Various Haskell 2010 stream comonads.
   * "Data.Stream.Future" provides a coinductive anti-causal stream, or non-empty 'ZipList'. The comonad provides access to only the
@@ -79,10 +80,14 @@ library
   build-depends:
     base          >= 4       && < 5,
     adjunctions   >= 4.0.1   && < 5,
+    boring        >= 0.2     && < 0.3,
     comonad       >= 4       && < 6,
     distributive  >= 0.2.1   && < 1,
-    semigroupoids >= 4       && < 6,
-    semigroups    >= 0.8.3.1 && < 1
+    semigroupoids >= 4       && < 6
+
+  if impl(ghc < 8.0)
+    build-depends:
+      semigroups  >= 0.8.3.1 && < 1
 
   default-extensions: CPP
   if impl(ghc)

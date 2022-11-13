@@ -94,6 +94,7 @@ import Data.Distributive
 import Data.Semigroup.Traversable
 import Data.Semigroup.Foldable
 import Data.List.NonEmpty (NonEmpty(..))
+import Data.Boring (Boring (..), Absurd (..))
 
 data Stream a = a :> Stream a deriving
   ( Show
@@ -122,6 +123,14 @@ instance Representable Stream where
 -- | Extract the first element of the stream.
 head :: Stream a -> a
 head (x :> _) = x
+
+-- | @since 3.3.1
+instance Boring a => Boring (Stream a) where
+  boring = pure boring
+
+-- | @since 3.3.1
+instance Absurd a => Absurd (Stream a) where
+  absurd = absurd . extract
 
 -- | Extract the sequence following the head of the stream.
 tail :: Stream a -> Stream a
@@ -177,9 +186,11 @@ unfold :: (a -> (b, a)) -> a -> Stream b
 unfold f c | (x, d) <- f c = x :> unfold f d
 
 instance Monad Stream where
-  return = pure
   m >>= f = unfold (\(bs :> bss) -> (extract bs, tail <$> bss)) (fmap f m)
+#if !(MIN_VERSION_base(4,11,0))
+  return = pure
   _ >> bs = bs
+#endif
 
 -- | Interleave two Streams @xs@ and @ys@, alternating elements
 -- from each list.
