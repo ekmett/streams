@@ -1,6 +1,7 @@
-3.3.1
------
-* Add `Boring` and `Absurd` instances for infinite streams 
+next [????.??.??]
+-----------------
+* Add `Boring` and `Absurd` instances for infinite streams.
+* Add a `head :: Stream a -> a` function to `Data.Stream.Infinite`.
 
 3.3
 ---
