@@ -1,5 +1,5 @@
-next [????.??.??]
------------------
+3.3.1 [2022.11.30]
+------------------
 * Add `Boring` and `Absurd` instances for infinite streams.
 * Add a `head :: Stream a -> a` function to `Data.Stream.Infinite`.
 
