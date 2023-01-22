@@ -52,7 +52,9 @@ import Prelude hiding
   , splitAt, foldr, reverse
   )
 
+#if !(MIN_VERSION_base(4,18,0))
 import Control.Applicative
+#endif
 import Control.Comonad
 #ifdef LANGUAGE_DeriveDataTypeable
 import Data.Data
