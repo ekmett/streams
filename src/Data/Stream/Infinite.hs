@@ -20,6 +20,7 @@ module Data.Stream.Infinite (
    -- * The type of streams
      Stream(..)
    -- * Basic functions
+   , head   -- :: Stream a -> a
    , tail   -- :: Stream a -> Stream a
    , inits  -- :: Stream a -> Stream [a]
    , prepend -- :: [a] -> Stream a -> Stream a
@@ -68,7 +69,7 @@ module Data.Stream.Infinite (
    ) where
 
 import Prelude hiding
-  ( tail, map, scanr, scanr1, scanl, scanl1
+  ( head, tail, map, scanr, scanr1, scanl, scanl1
   , iterate, take, drop, takeWhile
   , dropWhile, repeat, cycle, filter
   , (!!), zip, unzip, zipWith, words
