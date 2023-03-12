@@ -1,3 +1,7 @@
+next [????.??.??]
+-----------------
+* Support building with `semigroupoids-6`.
+
 3.3.1 [2022.11.30]
 ------------------
 * Add `Boring` and `Absurd` instances for infinite streams.

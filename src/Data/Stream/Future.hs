@@ -101,7 +101,8 @@ instance Traversable Future where
   traverse f (Last a)  = Last <$> f a
   traverse f (a :< as) = (:<) <$> f a <*> traverse f as
 
-instance Foldable1 Future
+instance Foldable1 Future where
+  foldMap1 = foldMap1Default
 
 instance Traversable1 Future where
   traverse1 f (Last a)  = Last <$> f a

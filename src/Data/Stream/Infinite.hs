@@ -87,11 +87,13 @@ import Data.Functor.Apply
 import Data.Functor.Extend
 import Data.Functor.Rep
 #if !(MIN_VERSION_base(4,8,0))
-import Data.Semigroup
 import Data.Traversable
 #endif
 import Data.Foldable hiding (concat)
 import Data.Distributive
+#if !(MIN_VERSION_base(4,11,0))
+import Data.Semigroup
+#endif
 import Data.Semigroup.Traversable
 import Data.Semigroup.Foldable
 import Data.List.NonEmpty (NonEmpty(..))
@@ -175,7 +177,8 @@ instance Foldable Stream where
 instance Traversable Stream where
   traverse f ~(a :> as) = (:>) <$> f a <*> traverse f as
 
-instance Foldable1 Stream
+instance Foldable1 Stream where
+  foldMap1 f (a :> as) = f a <> foldMap1 f as
 
 instance Traversable1 Stream where
   traverse1 f ~(a :> as) = (:>) <$> f a <.> traverse1 f as
