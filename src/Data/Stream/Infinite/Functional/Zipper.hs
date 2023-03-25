@@ -1,4 +1,4 @@
-{-# LANGUAGE CPP, PatternGuards, BangPatterns #-}
+{-# LANGUAGE CPP, PatternGuards, BangPatterns, MultiParamTypeClasses #-}
 #if __GLASGOW_HASKELL__ >= 702 && __GLASGOW_HASKELL__ < 710
 {-# LANGUAGE Trustworthy #-}
 #endif
@@ -56,6 +56,7 @@ import Prelude hiding
 import Control.Applicative
 #endif
 import Control.Comonad
+import Control.Comonad.Store.Class
 #ifdef LANGUAGE_DeriveDataTypeable
 import Data.Data
 #endif
@@ -124,6 +125,9 @@ instance ComonadApply Zipper where
   (<@) = (<.)
   (@>) = (.>)
 
+instance ComonadStore Integer Zipper where
+  peek i (_ :~ f) = f i
+  pos (n :~ _) = n
 
 instance Applicative Zipper where
   pure = repeat
