@@ -49,6 +49,8 @@ module Data.Stream.Infinite (
    , partition   -- :: (a -> Bool) -> Stream a -> (Stream a, Stream a)
    , group       -- :: (a -> Bool) -> Stream a -> Stream (NonEmpty a)
    , groupBy     -- :: (a -> a -> Bool) -> Stream a -> Stream (NonEmpty a)
+   -- * Searching an element
+   , find        -- :: (a -> Bool) -> Stream a -> a
    -- * Sublist predicates
    , isPrefixOf  -- :: [a] -> Stream a -> Bool
    -- * Indexing streams
@@ -89,7 +91,7 @@ import Data.Functor.Rep
 #if !(MIN_VERSION_base(4,8,0))
 import Data.Traversable
 #endif
-import Data.Foldable hiding (concat)
+import Data.Foldable hiding (concat, find)
 import Data.Distributive
 #if !(MIN_VERSION_base(4,11,0))
 import Data.Semigroup
@@ -366,6 +368,16 @@ groupBy :: (a -> a -> Bool) -> Stream a -> Stream (NonEmpty a)
 groupBy eq ~(x :> ys)
   | (xs, zs) <- span (eq x) ys
   = (x :| xs) :> groupBy eq zs
+
+-- | The 'find' function takes a predicate and a stream and returns
+-- the element in the stream that satisfies the predicate,
+--
+-- /Beware/: 'find' @p@ @xs@ will diverge if none of the elements of
+-- @xs@ satisfy @p@.
+find :: (a -> Bool) -> Stream a -> a
+find p (x :> xs)
+  | p x       = x
+  | otherwise = find p xs
 
 -- | The 'isPrefix' function returns @True@ if the first argument is
 -- a prefix of the second.

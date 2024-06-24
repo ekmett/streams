@@ -5,8 +5,8 @@
 * Data.Stream.NonEmpty        data NonEmpty a = a :| [a] 
 * Data.Stream.Future               data Future a = Last a | a :<   Future a
 * Data.Stream.Future.Skew          data Future a = Last a | !(Complete a) :< Future a
-* Data.Stream.Infinite                    data Future a = a :<   Future a
-* Data.Stream.Infinite.Skew               data Future a = !(Complete a) :< Future a
+* Data.Stream.Infinite                    data Stream a = a :>   Stream a
+* Data.Stream.Infinite.Skew               data Stream a = !(Complete a) :< Stream a
 * Data.Stream.Infinite.Functional.Zipper  data Zipper a = Zipper !(Integer -> a) !Integer
 
 -- TODO: refactor the existing Functional.Zipper to have a lower bound and add a Symmetric variant
