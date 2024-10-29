@@ -1,9 +1,7 @@
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE CPP #-}
-#if __GLASGOW_HASKELL__ >= 702
 {-# LANGUAGE Trustworthy #-}
-#endif
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Stream.Future
@@ -23,13 +21,7 @@ module Data.Stream.Future
   , index
   ) where
 
-#if MIN_VERSION_base(4,8,0)
 import Prelude hiding (tail)
-#else
-import Control.Applicative
-import Prelude hiding (tail, length)
-import Data.Foldable
-#endif
 
 import Control.Comonad
 import Data.Functor.Alt
@@ -40,32 +32,14 @@ import Data.Semigroup hiding (Last)
 #endif
 import Data.Semigroup.Foldable
 import Data.Semigroup.Traversable
-
-#ifdef LANGUAGE_DeriveDataTypeable
 import Data.Data
-#endif
-
-#if MIN_VERSION_base(4,7,0)
 import GHC.Exts as Exts
-#endif
+
 
 infixr 5 :<
 
 data Future a = Last a | a :< Future a deriving
-  ( Eq, Ord, Show, Read
-#ifdef LANGUAGE_DeriveDataTypeable
-  , Data, Typeable
-#endif
-  )
-
-#if __GLASGOW_HASKELL__ < 710
-length :: Future a -> Int
-length = go 1
-  where
-    go !n (Last _)  = n
-    go !n (_ :< as) = go (n + 1) as
-{-# INLINE length #-}
-#endif
+  (Eq, Ord, Show, Read, Data)
 
 tail :: Future a -> Maybe (Future a)
 tail (Last _) = Nothing
@@ -88,14 +62,12 @@ instance Functor Future where
 
 instance Foldable Future where
   foldMap = foldMapDefault
-#if __GLASGOW_HASKELL__ >= 710
   length = go 1
     where
       go !n (Last _)  = n
       go !n (_ :< as) = go (n + 1) as
   {-# INLINE length #-}
   null _ = False
-#endif
 
 instance Traversable Future where
   traverse f (Last a)  = Last <$> f a
@@ -151,7 +123,6 @@ instance Applicative Future where
   (<* ) = (<. )
   ( *>) = ( .>)
 
-#if MIN_VERSION_base(4,7,0)
 instance Exts.IsList (Future a) where
   type Item (Future a) = a
 
@@ -164,4 +135,3 @@ instance Exts.IsList (Future a) where
     go y (z:zs) = y :< go z zs
 
   fromListN _ = Exts.fromList
-#endif

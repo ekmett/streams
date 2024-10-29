@@ -20,18 +20,18 @@ extra-source-files:
   README
   .gitignore
   .vim.custom
-tested-with:   GHC == 7.4.2
-             , GHC == 7.6.3
-             , GHC == 7.8.4
-             , GHC == 7.10.3
-             , GHC == 8.0.2
+tested-with:   GHC == 8.0.2
              , GHC == 8.2.2
              , GHC == 8.4.4
              , GHC == 8.6.5
              , GHC == 8.8.4
              , GHC == 8.10.7
              , GHC == 9.0.2
-             , GHC == 9.2.2
+             , GHC == 9.2.8
+             , GHC == 9.4.8
+             , GHC == 9.6.6
+             , GHC == 9.8.2
+             , GHC == 9.10.1
 description:
   Various Haskell 2010 stream comonads.
   * "Data.Stream.Future" provides a coinductive anti-causal stream, or non-empty 'ZipList'. The comonad provides access to only the
@@ -78,21 +78,14 @@ library
     BangPatterns
 
   build-depends:
-    base          >= 4       && < 5,
+    base          >= 4.9     && < 5,
     adjunctions   >= 4.0.1   && < 5,
     boring        >= 0.2     && < 0.3,
     comonad       >= 4       && < 6,
     distributive  >= 0.2.1   && < 1,
     semigroupoids >= 4       && < 7
 
-  if impl(ghc < 8.0)
-    build-depends:
-      semigroups  >= 0.8.3.1 && < 1
-
-  default-extensions: CPP
-  if impl(ghc)
-    cpp-options: -DLANGUAGE_DeriveDataTypeable
-    default-extensions: FlexibleContexts, DeriveDataTypeable
+  default-extensions: CPP, FlexibleContexts, DeriveDataTypeable
 
   exposed-modules:
     Data.Stream.Future
@@ -103,8 +96,6 @@ library
     Data.Stream.Supply
 
   hs-source-dirs: src
-  ghc-options: -Wall
-  if impl(ghc >= 7.10)
-    ghc-options: -fno-warn-trustworthy-safe
+  ghc-options: -Wall -Wno-trustworthy-safe
   default-language: Haskell2010
 

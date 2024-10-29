@@ -1,9 +1,7 @@
 {-# LANGUAGE PatternGuards #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE CPP #-}
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 702
 {-# LANGUAGE Trustworthy #-}
-#endif
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Stream.Infinite
@@ -77,18 +75,12 @@ import Prelude hiding
   , splitAt, foldr, concat
   )
 
-#if !(MIN_VERSION_base(4,8,0))
-import Control.Applicative
-#endif
 import Control.Comonad
 import Data.Char (isSpace)
 import Data.Data
 import Data.Functor.Apply
 import Data.Functor.Extend
 import Data.Functor.Rep
-#if !(MIN_VERSION_base(4,8,0))
-import Data.Traversable
-#endif
 import Data.Foldable hiding (concat)
 import Data.Distributive
 #if !(MIN_VERSION_base(4,11,0))
@@ -100,11 +92,7 @@ import Data.List.NonEmpty (NonEmpty(..))
 import Data.Boring (Boring (..), Absurd (..))
 
 data Stream a = a :> Stream a deriving
-  ( Show
-#ifdef LANGUAGE_DeriveDataTypeable
-  , Data, Typeable
-#endif
-  )
+  (Show, Data)
 
 infixr 5 :>
 
@@ -169,10 +157,8 @@ instance Foldable Stream where
   fold (m :> ms) = m `mappend` fold ms
   foldMap f (a :> as) = f a `mappend` foldMap f as
   foldr f0 _ = go f0 where go f (a :> as) = f a (go f as)
-#if __GLASGOW_HASKELL__ > 710
   length _ = error "infinite length"
   null _ = False
-#endif
 
 instance Traversable Stream where
   traverse f ~(a :> as) = (:>) <$> f a <*> traverse f as

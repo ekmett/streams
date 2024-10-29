@@ -1,8 +1,6 @@
 {-# LANGUAGE PatternGuards, BangPatterns, TypeFamilies #-}
 {-# LANGUAGE CPP #-}
-#if __GLASGOW_HASKELL__ >= 702
 {-# LANGUAGE Trustworthy #-}
-#endif
 
 -----------------------------------------------------------------------------
 -- |
@@ -51,22 +49,14 @@ import Control.Applicative hiding (empty)
 import Control.Comonad
 import Data.Functor.Alt
 import Data.Functor.Extend
-#if MIN_VERSION_base(4,8,0)
 import Prelude hiding (tail, drop, dropWhile, last, span, repeat, replicate, break)
 import Data.Foldable (toList)
-#else
-import Data.Foldable
-import Data.Traversable (Traversable, traverse)
-import Prelude hiding (null, tail, drop, dropWhile, length, foldr, last, span, repeat, replicate, break)
-#endif
 #if !(MIN_VERSION_base(4,11,0))
 import Data.Semigroup hiding (Last)
 #endif
 import Data.Semigroup.Foldable
 import Data.Semigroup.Traversable
-#if MIN_VERSION_base(4,7,0)
 import qualified GHC.Exts as Exts
-#endif
 
 infixr 5 :<, <|
 
@@ -93,11 +83,9 @@ instance Foldable Complete where
   foldMap f (Bin _ a l r) = f a `mappend` foldMap f l `mappend` foldMap f r
   foldr f z (Tip a) = f a z
   foldr f z (Bin _ a l r) = f a (foldr f (foldr f z r) l)
-#if MIN_VERSION_base(4,8,0)
   length Tip{} = 1
   length (Bin n _ _ _) = n
   null _ = False
-#endif
 
 instance Foldable1 Complete where
   foldMap1 f (Tip a) = f a
@@ -179,11 +167,9 @@ instance Foldable Future where
   foldMap f (Last t) = foldMap f t
   foldr f z (t :< ts) = foldr f (foldr f z ts) t
   foldr f z (Last t) = foldr f z t
-#if MIN_VERSION_base(4,8,0)
   length (Last t) = weight t
   length (t :< ts) = weight t + length ts
   null _ = False
-#endif
 
 instance Foldable1 Future where
   foldMap1 f (t :< ts) = foldMap1 f t <> foldMap1 f ts
@@ -241,13 +227,6 @@ from a = mapWithIndex ((+) . fromIntegral) (pure a)
 singleton :: a -> Future a
 singleton a = Last (Tip a)
 {-# INLINE singleton #-}
-
-#if !(MIN_VERSION_base(4,8,0))
--- | /O(log n)/.
-length :: Future a -> Int
-length (Last t) = weight t
-length (t :< ts) = weight t + length ts
-#endif
 
 -- | /O(1)/ cons
 (<|) :: a -> Future a -> Future a
@@ -382,7 +361,6 @@ splitCompleteW p t@(Bin _ a l r) f
   | w <- f r, p w, (ts, fs) <- splitCompleteW p l (:< w) = (a:ts, fs)
   |                (ts, fs) <- splitCompleteW p r f      = (a:foldr (:) ts l, fs)
 
-#if MIN_VERSION_base(4,7,0)
 instance Exts.IsList (Future a) where
   type Item (Future a) = a
   toList = Data.Foldable.toList
@@ -390,21 +368,10 @@ instance Exts.IsList (Future a) where
   fromList (x:xs) = go x xs
     where go a [] = singleton a
           go a (b:bs) = a <| go b bs
-#else
-fromList :: [a] -> Future a
-fromList [] = error "fromList: empty list"
-fromList (x:xs) = go x xs
-  where go a [] = singleton a
-        go a (b:bs) = a <| go b bs
-#endif
 
 toFuture :: [a] -> Maybe (Future a)
 toFuture [] = Nothing
-#if MIN_VERSION_base(4,7,0)
 toFuture xs = Just (Exts.fromList xs)
-#else
-toFuture xs = Just (fromList xs)
-#endif
 
 -- /O(n)/
 insert :: Ord a => a -> Future a -> Future a

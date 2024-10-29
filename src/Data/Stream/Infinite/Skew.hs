@@ -1,9 +1,7 @@
 {-# LANGUAGE PatternGuards, BangPatterns #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE CPP #-}
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 702
 {-# LANGUAGE Trustworthy #-}
-#endif
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Stream.Infinite.Skew
@@ -83,11 +81,9 @@ instance Foldable Complete where
   foldMap f (Bin _ a l r) = f a `mappend` foldMap f l `mappend` foldMap f r
   foldr f z (Tip a) = f a z
   foldr f z (Bin _ a l r) = f a (foldr f (foldr f z r) l)
-#if __GLASGOW_HASKELL__ >= 710
   length Tip{} = 1
   length (Bin n _ _ _) = fromIntegral n
   null _ = False
-#endif
 
 instance Foldable1 Complete where
   foldMap1 f (Tip a) = f a
@@ -157,10 +153,8 @@ instance Alt Stream where
 instance Foldable Stream where
   foldMap f (t :< ts) = foldMap f t `mappend` foldMap f ts
   foldr f z (t :< ts) = foldr f (foldr f z ts) t
-#if __GLASGOW_HASKELL__ >= 710
   length _ = error "infinite length"
   null _ = False
-#endif
 
 instance Foldable1 Stream where
   foldMap1 f (t :< ts) = foldMap1 f t <> foldMap1 f ts

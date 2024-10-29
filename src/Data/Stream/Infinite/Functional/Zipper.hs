@@ -1,7 +1,4 @@
 {-# LANGUAGE CPP, PatternGuards, BangPatterns #-}
-#if __GLASGOW_HASKELL__ >= 702 && __GLASGOW_HASKELL__ < 710
-{-# LANGUAGE Trustworthy #-}
-#endif
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Stream.Infinite.Functional.Zipper
@@ -56,9 +53,6 @@ import Prelude hiding
 import Control.Applicative
 #endif
 import Control.Comonad
-#ifdef LANGUAGE_DeriveDataTypeable
-import Data.Data
-#endif
 import Data.Functor.Extend
 import Data.Functor.Apply
 #if !(MIN_VERSION_base(4,11,0))
@@ -66,9 +60,6 @@ import Data.Semigroup
 #endif
 
 data Zipper a = !Integer :~ !(Integer -> a)
-#ifdef LANGUAGE_DeriveDataTypeable
-  deriving Typeable
-#endif
 
 toSequence :: (Integer -> a) -> Zipper a
 toSequence = (0 :~)

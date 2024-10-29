@@ -1,3 +1,7 @@
+next [????.??.??]
+-----------------
+* Drop support for pre-8.0 versions of GHC.
+
 3.3.2 [2023.03.12]
 ------------------
 * Support building with `semigroupoids-6`.

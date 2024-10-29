@@ -1,7 +1,6 @@
-{-# LANGUAGE CPP, FlexibleContexts #-}
-#if defined(__GLASGOW_HASKELL__) && __GLASGOW_HASKELL__ >= 702
+{-# LANGUAGE CPP #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE Trustworthy #-}
-#endif
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Data.Stream.Supply
@@ -42,18 +41,12 @@ module Data.Stream.Supply
   , split4
   ) where
 
-#if !(MIN_VERSION_base(4,8,0))
-import Control.Applicative
-#endif
 import Control.Comonad
+import Data.Data
 import Data.Functor.Apply
 import Data.Functor.Extend
 import Data.Functor.Rep
 import Data.IORef(newIORef, atomicModifyIORef)
-#if !(MIN_VERSION_base(4,8,0))
-import Data.Foldable
-import Data.Traversable
-#endif
 #if !(MIN_VERSION_base(4,11,0))
 import Data.Semigroup
 #endif
@@ -62,24 +55,10 @@ import Data.Semigroup.Traversable
 import System.IO.Unsafe (unsafeInterleaveIO)
 import Data.Stream.Infinite
 import qualified Data.Stream.Infinite.Skew as Skew
-
-#ifdef LANGUAGE_DeriveDataTypeable
-import Data.Data
-#endif
-
-#if __GLASGOW_HASKELL__ >= 608
 import GHC.IO(unsafeDupableInterleaveIO)
-#else
-unsafeDupableInterleaveIO :: IO a -> IO a
-unsafeDupableInterleaveIO = unsafeInterleaveIO
-#endif
 
 data Supply a = Supply a (Supply a) (Supply a) deriving
-  ( Show, Read, Eq, Ord
-#ifdef LANGUAGE_DeriveDataTypeable
-  , Data, Typeable
-#endif
-  )
+  (Show, Read, Eq, Ord, Data)
 
 instance Functor Supply where
   fmap f (Supply a l r) = Supply (f a) (fmap f l) (fmap f r)
