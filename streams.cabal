@@ -1,6 +1,6 @@
 name:          streams
 category:      Control, Comonads
-version:       3.3.2
+version:       3.3.3
 license:       BSD3
 cabal-version: >= 1.10
 license-file:  LICENSE
